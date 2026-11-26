@@ -69,56 +69,19 @@ h1 {
   font-size: 12px;
 }
 
-main {
-  display: grid;
-  gap: 12px;
-}
-
 .card {
   border: 1px solid var(--line);
   border-radius: 12px;
   background: var(--card);
 }
 
-.main-toggle,
-.row {
+.main-toggle {
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  cursor: pointer;
-}
-
-.main-toggle {
   padding: 16px;
-}
-
-.main-toggle .title {
-  font-size: 16px;
-}
-
-.options {
-  padding: 6px 16px;
-  transition: opacity 0.15s;
-}
-
-.options.dimmed {
-  opacity: 0.5;
-}
-
-.options h2 {
-  margin: 10px 0 2px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 600;
-}
-
-.row {
-  padding: 12px 0;
-}
-
-.row + .row {
-  border-top: 1px solid var(--line);
+  cursor: pointer;
 }
 
 .text {
@@ -128,23 +91,13 @@ main {
 }
 
 .title {
+  font-size: 16px;
   font-weight: 600;
 }
 
 .desc {
   color: var(--muted);
   font-size: 12.5px;
-}
-
-code {
-  font: 12px ui-monospace, Consolas, monospace;
-}
-
-footer {
-  margin-top: 14px;
-  color: var(--muted);
-  font-size: 12px;
-  text-align: center;
 }
 
 /* 켜기·끄기 스위치 */
