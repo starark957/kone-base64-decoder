@@ -10,16 +10,19 @@
     /* 코네(Tailwind)의 반응형 레이아웃 흉내: 768px 이상이면 데스크톱 행, 아니면 모바일 행 */
     .hidden { display: none; }
     @media (min-width: 768px) { .md\:block { display: block; } .md\:hidden { display: none; } }
-    a.row { display: block; padding: 6px 0; border-bottom: 1px solid #ddd; color: inherit; text-decoration: none; }
+    a.row { display: block; padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); color: inherit; text-decoration: none; }
     .md\:grid { display: grid; grid-template-columns: 4rem minmax(0, 1fr) 6rem; gap: 12px; align-items: center; }
     .flex { display: flex; align-items: center; gap: 4px; min-width: 0; }
     .flex-col { flex-direction: column; align-items: stretch; }
     .min-w-0 { min-width: 0; }
     .text-ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    /* 코네 다크 모드 흉내: <html class="dark"> */
+    html.dark body { background: #0b0b0c; color: #e4e4e7; }
   </style>
 </head>
 <body>
   <div class="controls">
+    <button onclick="document.documentElement.classList.toggle('dark')">다크 모드</button>
     <button id="next-new">다음 페이지 (행을 새로 만듦)</button>
     <button id="next-reuse">다음 페이지 (행 재사용: 텍스트만 바꿈)</button>
   </div>
