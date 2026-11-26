@@ -13,6 +13,16 @@ test('패키지에는 manifest·아이콘·src만 들어간다', () => {
   }
 });
 
+test('팝업 폰트와 라이선스(OFL)가 함께 들어간다', () => {
+  const files = listFiles();
+  assert.ok(files.includes('src/popup/fonts/popup-sans.woff2'));
+  assert.ok(files.includes('src/popup/fonts/OFL.txt'));
+  const css = require('node:fs').readFileSync(require('node:path').join(__dirname, '../src/popup/popup.css'), 'utf8');
+  assert.match(css, /url\('fonts\/popup-sans\.woff2'\)/);
+  // OFL: 수정본(글자를 줄인 폰트)은 예약 이름 Pretendard를 글꼴 이름으로 쓰면 안 된다
+  assert.doesNotMatch(css, /font-family:\s*'Pretendard/);
+});
+
 test('crc32 표준 검사값', () => {
   assert.equal(crc32(Buffer.from('123456789')), 0xcbf43926);
 });
