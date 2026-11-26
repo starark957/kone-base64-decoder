@@ -57,6 +57,23 @@
     debug.lastScanMs = performance.now() - t0;
   }
 
+  /**
+   * 팝업에 보여줄 영역별 디코딩 개수. 화면에 보이는 것만 센다
+   * (목록 행에는 데스크톱·모바일 레이아웃이 함께 있어 둘 중 하나는 숨겨져 있다).
+   */
+  function stats() {
+    const out = { count: 0, body: 0, title: 0, list: 0 };
+    for (const el of document.querySelectorAll('.b64d')) {
+      if (el.getClientRects().length === 0) continue;
+      if (el.closest(selectors.postBody)) out.body++;
+      else if (el.closest(selectors.postTitle)) out.title++;
+      else if (el.closest(selectors.listTitle)) out.list++;
+      else continue;
+      out.count++;
+    }
+    return out;
+  }
+
   /** 테스트용 계측값 (처리 횟수, 마지막 처리 시간) */
   const debug = { scans: 0, lastScanMs: 0 };
   root.B64D.debug = debug;
@@ -101,7 +118,7 @@
 
   api.onMessage((message) => {
     if (message && message.type === 'b64d:getStats') {
-      return { enabled: current.enabled, count: current.enabled ? replacer.countAll() : 0 };
+      return { enabled: current.enabled, ...(current.enabled ? stats() : { count: 0, body: 0, title: 0, list: 0 }) };
     }
     return undefined;
   });

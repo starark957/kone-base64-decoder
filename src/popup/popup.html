@@ -7,7 +7,7 @@
 </head>
 <body>
   <header class="row">
-    <h1>코네 Base64 디코더</h1>
+    <h1><img src="../../icons/icon-32.png" width="16" height="16" alt="">코네 Base64 디코더</h1>
     <label class="switch" title="전체 켜기·끄기">
       <input type="checkbox" id="enabled" aria-label="자동 디코딩 켜기">
       <span class="slider" aria-hidden="true"></span>
@@ -15,6 +15,11 @@
   </header>
 
   <p class="status" id="status">불러오는 중…</p>
+  <dl class="breakdown" id="breakdown" hidden>
+    <div><dt>본문</dt><dd data-key="body">0</dd></div>
+    <div><dt>글 제목</dt><dd data-key="title">0</dd></div>
+    <div><dt>목록 제목</dt><dd data-key="list">0</dd></div>
+  </dl>
 
   <script src="../lib/browser-api.js"></script>
   <script src="../lib/settings.js"></script>

@@ -4,8 +4,13 @@
   const { api, settings } = root.B64D;
   const toggle = document.getElementById('enabled');
   const status = document.getElementById('status');
+  const breakdown = document.getElementById('breakdown');
 
   const KONE = /^https:\/\/kone\.gg\//;
+  /** 팝업이 열려 있는 동안 개수를 다시 묻는 간격(게시물 이동·켜기 직후 처리 결과를 따라가게) */
+  const REFRESH_MS = 1000;
+
+  let enabled = true;
 
   function setStatus(text, strong) {
     status.textContent = '';
@@ -17,33 +22,51 @@
     }
   }
 
-  async function refreshStatus(enabled) {
+  function setBreakdown(stats) {
+    if (!stats) {
+      breakdown.hidden = true;
+      return;
+    }
+    for (const key of ['body', 'title', 'list']) {
+      breakdown.querySelector(`[data-key="${key}"]`).textContent = String(stats[key] || 0);
+    }
+    breakdown.hidden = false;
+  }
+
+  async function refreshStatus() {
     if (!enabled) {
       setStatus('꺼져 있습니다. 페이지의 원문이 그대로 보입니다.');
+      setBreakdown(null);
       return;
     }
     const tab = await api.activeTab();
     if (!tab || !KONE.test(tab.url || '')) {
       setStatus('코네(kone.gg) 페이지에서만 동작합니다.');
+      setBreakdown(null);
       return;
     }
     try {
       const stats = await api.sendToTab(tab.id, { type: 'b64d:getStats' });
-      setStatus('이 탭에서 디코딩한 문장: ', `${stats ? stats.count : 0}개`);
+      setStatus('이 화면에서 디코딩한 문장: ', `${stats ? stats.count : 0}개`);
+      setBreakdown(stats);
     } catch {
       // 확장을 설치·업데이트하기 전에 열린 탭에는 콘텐츠 스크립트가 없다.
       setStatus('페이지를 새로고침하면 동작합니다.');
+      setBreakdown(null);
     }
   }
 
   async function init() {
     const s = await settings.load();
-    toggle.checked = s.enabled;
+    enabled = s.enabled;
+    toggle.checked = enabled;
     toggle.addEventListener('change', async () => {
       const next = await settings.save({ enabled: toggle.checked });
-      refreshStatus(next.enabled);
+      enabled = next.enabled;
+      refreshStatus();
     });
-    refreshStatus(s.enabled);
+    await refreshStatus();
+    setInterval(refreshStatus, REFRESH_MS);
   }
 
   init();
