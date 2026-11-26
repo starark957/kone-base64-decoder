@@ -21,11 +21,10 @@
       },
     ];
     if (s.decodeTitles) {
-      list.push({
-        selector: selectors.postTitle,
-        opts: { ...base64.AREA.title, minLength: s.minLength.title },
-        display: { linkify: false }, // 제목은 텍스트로만
-      });
+      const titleOpts = { ...base64.AREA.title, minLength: s.minLength.title };
+      // 제목은 텍스트로만. 목록 제목은 링크 안이라 클릭 전환 없이 원문 툴팁만 붙는다.
+      list.push({ selector: selectors.postTitle, opts: titleOpts, display: { linkify: false } });
+      list.push({ selector: selectors.listTitle, opts: titleOpts, display: { linkify: false } });
     }
     return list;
   }

@@ -3,6 +3,10 @@
   background-color: rgba(250, 204, 21, 0.25);
   border-radius: 3px;
   padding: 0 2px;
+}
+
+/* 결과에 줄바꿈이 있을 때만 줄을 살린다(목록 제목의 한 줄 말줄임을 깨지 않게). */
+.b64d-multiline {
   white-space: pre-wrap;
 }
 
