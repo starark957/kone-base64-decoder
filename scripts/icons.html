@@ -4,69 +4,106 @@
   <meta charset="utf-8">
   <title>아이콘 만들기</title>
   <style>
-    body { font: 14px/1.5 system-ui, 'Malgun Gothic', sans-serif; margin: 24px; }
-    .row { display: flex; align-items: flex-end; gap: 24px; margin: 16px 0; padding: 16px; }
+    body { font: 14px/1.5 system-ui, 'Malgun Gothic', sans-serif; margin: 24px; color: #1f2328; background: #ffffff; }
+    h2 { margin: 20px 0 8px; font-size: 16px; }
+    .bar { display: flex; align-items: flex-end; gap: 28px; padding: 12px 20px; border-radius: 10px; }
+    .bar + .bar { margin-top: 8px; }
+    .light { background: #f1f3f4; color: #3c4043; }
     .dark { background: #202124; color: #e8eaed; }
-    figure { margin: 0; text-align: center; }
-    canvas { display: block; margin: 0 auto 4px; }
+    figure { margin: 0; text-align: center; font-size: 12px; }
+    figure > * { display: block; margin: 0 auto 4px; }
+    .zoom { width: 128px; height: 128px; image-rendering: pixelated; }
+    .label { width: 100px; flex: none; font-size: 12px; align-self: center; }
   </style>
 </head>
 <body>
-  <p>icons/ 폴더의 PNG를 만드는 페이지입니다. 브라우저로 열고 각 이미지를 저장하거나, <code>window.iconData</code>(크기 → base64 PNG)를 꺼내 쓰세요.</p>
-  <div class="row" id="light"></div>
-  <div class="row dark" id="dark"></div>
+  <p>icons/ 폴더의 PNG를 만드는 페이지입니다. 지금 쓰는 것은 <strong>2. 바깥 회색 테두리</strong>(<code>outer</code>)이고, 나머지는 비교용입니다.
+     <code>window.iconData[변형][크기]</code>에 base64 PNG가 들어 있습니다.
+     실제 크기 옆의 큰 그림은 16px을 8배로 키워 픽셀을 그대로 보여준 것입니다.</p>
+  <div id="out"></div>
   <script>
-    // 파란 둥근 사각형 + 흰 "64" + 디코딩 강조색(노랑) 밑줄
-    function draw(size) {
+    // 코네 로고처럼 검은 원 안에 흰 대문자 K. 아이콘은 하나로 밝은·어두운 도구 모음 모두에서 보여야 한다.
+    //  plain : 테두리 없음 (어두운 도구 모음에서 원이 묻힌다 — 비교용)
+    //  outer : 바깥에 회색 테두리
+    //  inner : 안쪽에 흰 고리 (동전처럼) — 어두운 바탕에서도 고리가 원 모양을 그려 준다
+    const VARIANTS = {
+      plain: { name: '테두리 없음 (기존 A)', fill: '#000000', ink: '#ffffff', ring: null },
+      outer: { name: '바깥 회색 테두리', fill: '#000000', ink: '#ffffff', ring: { color: '#9aa0a6', width: 0.045, inset: 0 } },
+      inner: { name: '안쪽 흰 고리', fill: '#000000', ink: '#ffffff', ring: { color: '#ffffff', width: 0.06, inset: 0.1 } },
+    };
+    const SIZES = [16, 32, 48, 128];
+
+    function draw(size, v) {
       const c = document.createElement('canvas');
       c.width = c.height = size;
       const g = c.getContext('2d');
-      const s = size / 128;
-      const pad = size <= 16 ? 0 : 4 * s;
-      const r = 24 * s;
+      const r = size / 2;
 
-      g.fillStyle = '#2563eb';
+      g.fillStyle = v.fill;
       g.beginPath();
-      g.roundRect(pad, pad, size - pad * 2, size - pad * 2, r);
+      g.arc(r, r, r, 0, Math.PI * 2);
       g.fill();
 
-      // 작은 크기에서는 글자를 더 크게
-      const fontPx = size <= 16 ? 11 : size <= 32 ? 21 : 66 * s;
-      g.fillStyle = '#ffffff';
-      g.font = `800 ${fontPx}px "Segoe UI", Arial, sans-serif`;
-      g.textAlign = 'center';
+      let scale = 1;
+      if (v.ring) {
+        const w = Math.max(1, Math.round(size * v.ring.width));
+        const inset = v.ring.inset ? Math.max(1, Math.round(size * v.ring.inset)) : 0;
+        g.strokeStyle = v.ring.color;
+        g.lineWidth = w;
+        g.beginPath();
+        g.arc(r, r, r - inset - w / 2, 0, Math.PI * 2);
+        g.stroke();
+        // 안쪽 고리가 있으면 K를 그만큼 줄인다
+        if (inset) scale = (r - inset - w) / r;
+      }
+
+      // K 높이를 원 지름의 약 56%로 맞춘다(작은 크기는 조금 더 크게).
+      const target = size * scale * (size <= 16 ? 0.66 : size <= 32 ? 0.6 : 0.56);
+      const FONT = '"Segoe UI Black", "Arial Black", "Segoe UI", sans-serif';
+      g.fillStyle = v.ink;
+      g.textAlign = 'left';
       g.textBaseline = 'alphabetic';
-      const m = g.measureText('64');
-      const textH = m.actualBoundingBoxAscent;
-      const barH = Math.max(2, Math.round(10 * s));
-      const gap = Math.max(1, Math.round(8 * s));
-      const blockH = textH + gap + barH;
-      const top = (size - blockH) / 2;
-      const baseline = Math.round(top + textH);
-      g.fillText('64', size / 2, baseline);
-
-      const barW = Math.round(Math.max(m.width, 8) * 1.05);
-      g.fillStyle = '#facc15';
-      g.beginPath();
-      g.roundRect(Math.round((size - barW) / 2), baseline + gap, barW, barH, barH / 2);
-      g.fill();
+      g.font = `900 ${target}px ${FONT}`;
+      const px = (target * target) / g.measureText('K').actualBoundingBoxAscent;
+      g.font = `900 ${px}px ${FONT}`;
+      const m = g.measureText('K');
+      // 글자 실제 상자(왼쪽 L, 오른쪽 R, 위 A)의 가운데를 원 중심에 맞춘다
+      const x = r - (m.actualBoundingBoxRight - m.actualBoundingBoxLeft) / 2;
+      const y = r + (m.actualBoundingBoxAscent - m.actualBoundingBoxDescent) / 2;
+      g.fillText('K', x, y);
       return c;
     }
 
     window.iconData = {};
-    for (const size of [16, 32, 48, 128]) {
-      const c = draw(size);
-      window.iconData[size] = c.toDataURL('image/png').split(',')[1];
-      for (const id of ['light', 'dark']) {
+    const out = document.getElementById('out');
+    for (const [key, v] of Object.entries(VARIANTS)) {
+      window.iconData[key] = {};
+      const h = document.createElement('h2');
+      h.textContent = `${Object.keys(VARIANTS).indexOf(key) + 1}. ${v.name}`;
+      out.append(h);
+      const canvases = Object.fromEntries(SIZES.map((s) => [s, draw(s, v)]));
+      for (const s of SIZES) window.iconData[key][s] = canvases[s].toDataURL('image/png').split(',')[1];
+      for (const theme of ['light', 'dark']) {
+        const bar = document.createElement('div');
+        bar.className = `bar ${theme}`;
+        const label = document.createElement('div');
+        label.className = 'label';
+        label.textContent = theme === 'light' ? '밝은 도구 모음' : '어두운 도구 모음';
+        bar.append(label);
+        for (const s of SIZES) {
+          const fig = document.createElement('figure');
+          const img = new Image(s, s);
+          img.src = canvases[s].toDataURL('image/png');
+          fig.append(img, `${s}px`);
+          bar.append(fig);
+        }
+        const zoom = new Image();
+        zoom.className = 'zoom';
+        zoom.src = canvases[16].toDataURL('image/png');
         const fig = document.createElement('figure');
-        const img = new Image();
-        img.src = c.toDataURL('image/png');
-        img.width = img.height = size;
-        const big = draw(size);
-        big.style.width = big.style.height = '128px';
-        big.style.imageRendering = 'pixelated';
-        fig.append(img, big, `${size}px`);
-        document.getElementById(id).append(fig);
+        fig.append(zoom, '16px × 8');
+        bar.append(fig);
+        out.append(bar);
       }
     }
   </script>
