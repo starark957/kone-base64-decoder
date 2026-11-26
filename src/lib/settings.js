@@ -1,33 +1,19 @@
 // 설정 기본값과 읽기·쓰기. 저장소는 chrome.storage.sync.
+// 사용자 설정은 자동 디코딩 켜기·끄기 하나뿐이다. 디코딩 범위(본문·제목·목록 제목),
+// 주소 링크 표시, 최소 길이 같은 기준은 설정이 아니라 코드(content.js, base64.js)에 둔다.
 (function (root) {
   'use strict';
 
   const DEFAULTS = Object.freeze({
     enabled: true,
-    display: 'replace', // 'replace' | 'both' (v1.1 옵션 페이지에서 선택)
-    decodeTitles: true,
-    linkify: true,
-    minLength: Object.freeze({ body: 16, title: 4 }),
   });
 
-  /** 저장된 값(일부만 있을 수 있음)을 기본값과 합쳐 완전한 설정으로 만든다. */
+  /** 저장된 값(일부만 있을 수 있음)을 기본값과 합쳐 완전한 설정으로 만든다. 모르는 키는 버린다. */
   function normalize(raw) {
     const src = raw && typeof raw === 'object' ? raw : {};
-    const minLength = { ...DEFAULTS.minLength, ...(src.minLength || {}) };
     return {
       enabled: typeof src.enabled === 'boolean' ? src.enabled : DEFAULTS.enabled,
-      display: src.display === 'both' ? 'both' : 'replace',
-      decodeTitles: typeof src.decodeTitles === 'boolean' ? src.decodeTitles : DEFAULTS.decodeTitles,
-      linkify: typeof src.linkify === 'boolean' ? src.linkify : DEFAULTS.linkify,
-      minLength: {
-        body: positiveInt(minLength.body, DEFAULTS.minLength.body),
-        title: positiveInt(minLength.title, DEFAULTS.minLength.title),
-      },
     };
-  }
-
-  function positiveInt(value, fallback) {
-    return Number.isInteger(value) && value > 0 ? value : fallback;
   }
 
   async function load() {

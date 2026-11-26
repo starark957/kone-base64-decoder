@@ -13,7 +13,6 @@
 <body>
   <div class="controls">
     <button id="toggle-enabled">켜기·끄기</button>
-    <button id="toggle-titles">제목 디코딩 켜기·끄기</button>
     <button id="rewrite-title">제목 텍스트 바꾸기 (프레임워크 갱신 흉내)</button>
     <button id="swap-body">본문 통째로 교체 (게시물 이동 흉내)</button>
   </div>
@@ -60,10 +59,6 @@
     document.getElementById('toggle-enabled').onclick = async () => {
       const s = await settings.load();
       settings.save({ enabled: !s.enabled });
-    };
-    document.getElementById('toggle-titles').onclick = async () => {
-      const s = await settings.load();
-      settings.save({ decodeTitles: !s.decodeTitles });
     };
     // 프레임워크가 원래 텍스트 노드의 내용만 바꾸는 경우
     const titleNode = document.querySelector('#post-article h1').firstChild;

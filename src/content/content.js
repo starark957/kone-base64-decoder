@@ -11,23 +11,16 @@
   let observer = null;
   let timer = 0;
 
-  /** 지금 설정에서 처리할 영역 목록 */
-  function areas(s) {
-    const list = [
-      {
-        selector: selectors.postBody,
-        opts: { ...base64.AREA.body, minLength: s.minLength.body },
-        display: { linkify: s.linkify },
-      },
-    ];
-    if (s.decodeTitles) {
-      const titleOpts = { ...base64.AREA.title, minLength: s.minLength.title };
-      // 제목은 텍스트로만. 목록 제목은 링크 안이라 클릭 전환 없이 원문 툴팁만 붙는다.
-      list.push({ selector: selectors.postTitle, opts: titleOpts, display: { linkify: false } });
-      list.push({ selector: selectors.listTitle, opts: titleOpts, display: { linkify: false } });
-    }
-    return list;
-  }
+  /**
+   * 처리할 영역 목록. 본문은 풀린 주소를 링크로 만들고,
+   * 제목은 텍스트로만 바꾼다(목록 제목은 링크 안이라 클릭 전환 없이 원문 툴팁만 붙는다).
+   */
+  const AREAS = Object.freeze([
+    { selector: selectors.postBody, opts: base64.AREA.body, display: { linkify: true } },
+    { selector: selectors.postTitle, opts: base64.AREA.title, display: { linkify: false } },
+    { selector: selectors.listTitle, opts: base64.AREA.title, display: { linkify: false } },
+  ]);
+  const AREA_UNION = AREAS.map((a) => a.selector).join(', ');
 
   /** 확장이 DOM을 바꾸는 동안에는 감시를 멈춰 자기 변경에 다시 반응하지 않게 한다. */
   function withoutObserver(fn) {
@@ -46,7 +39,7 @@
     const t0 = performance.now();
     withoutObserver(() => {
       replacer.reconcile();
-      for (const area of areas(current)) {
+      for (const area of AREAS) {
         for (const el of document.querySelectorAll(area.selector)) {
           replacer.decorateArea(el, area.opts, area.display, selectors.skip);
         }
@@ -61,14 +54,9 @@
   const debug = { scans: 0, lastScanMs: 0 };
   root.B64D.debug = debug;
 
-  /** 처리 대상 영역 전체를 한 번에 고르는 선택자 */
-  function areaUnion() {
-    return areas(current).map((a) => a.selector).join(', ');
-  }
-
   /** 바뀐 곳이 처리 대상 영역과 관련 있는지. 시계·조회수 같은 다른 곳의 변경은 무시한다. */
   function isRelevant(records) {
-    const union = areaUnion();
+    const union = AREA_UNION;
     for (const r of records) {
       const el = r.target.nodeType === Node.ELEMENT_NODE ? r.target : r.target.parentElement;
       if (!el) continue;
@@ -94,7 +82,7 @@
   function applySettings(next) {
     current = next;
     document.documentElement.dataset.b64d = next.enabled ? 'on' : 'off';
-    // 표시 방식·영역이 바뀌었을 수 있으니 되돌린 뒤 새 설정으로 다시 처리한다.
+    // 꺼지면 원문으로 되돌리고, 켜지면 처음부터 다시 처리한다.
     withoutObserver(() => replacer.restoreAll());
     scan();
   }
