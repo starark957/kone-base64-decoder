@@ -14,11 +14,18 @@
    */
   const tracked = new Map();
 
+  /**
+   * 이미 검사한 텍스트 노드 → 검사할 때의 내용. 내용이 그대로면 다시 검사하지 않는다
+   * (화면이 조금 바뀔 때마다 긴 본문 전체에 정규식을 다시 돌리지 않게).
+   */
+  let checked = new WeakMap();
+
   /** 처리해도 되는 텍스트 노드만 모은다. */
   function collectTextNodes(scope, skipSelector) {
     const out = [];
     const walker = document.createTreeWalker(scope, NodeFilter.SHOW_TEXT, {
       acceptNode(node) {
+        if (checked.get(node) === node.data) return NodeFilter.FILTER_REJECT;
         if (!node.data || node.data.trim().length < 2) return NodeFilter.FILTER_REJECT;
         const parent = node.parentElement;
         if (!parent) return NodeFilter.FILTER_REJECT;
@@ -93,17 +100,25 @@
    */
   function decorateTextNode(node, opts, display) {
     const matches = base64.findMatches(node.data, opts);
-    if (matches.length === 0) return 0;
+    if (matches.length === 0) {
+      checked.set(node, node.data);
+      return 0;
+    }
     const inLink = !!node.parentElement.closest('a');
     const parts = [];
     for (let i = matches.length - 1; i >= 0; i--) {
       const m = matches[i];
-      if (m.end < node.length) parts.push(node.splitText(m.end));
+      if (m.end < node.length) {
+        const tail = node.splitText(m.end);
+        checked.set(tail, tail.data);
+        parts.push(tail);
+      }
       const mid = node.splitText(m.start);
       const decorated = makeDecoded(m, { linkify: display.linkify, inLink });
       mid.replaceWith(decorated);
       parts.push(decorated);
     }
+    checked.set(node, node.data);
     tracked.set(node, { prefix: node.data, parts });
     return matches.length;
   }
@@ -142,6 +157,7 @@
       el.replaceWith(document.createTextNode(el.dataset.b64dOriginal || ''));
     }
     tracked.clear();
+    checked = new WeakMap(); // 설정(최소 길이 등)이 바뀌었을 수 있으니 처음부터 다시 검사
   }
 
   function countAll(scope = document) {
