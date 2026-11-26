@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>아이콘 만들기</title>
+  <style>
+    body { font: 14px/1.5 system-ui, 'Malgun Gothic', sans-serif; margin: 24px; }
+    .row { display: flex; align-items: flex-end; gap: 24px; margin: 16px 0; padding: 16px; }
+    .dark { background: #202124; color: #e8eaed; }
+    figure { margin: 0; text-align: center; }
+    canvas { display: block; margin: 0 auto 4px; }
+  </style>
+</head>
+<body>
+  <p>icons/ 폴더의 PNG를 만드는 페이지입니다. 브라우저로 열고 각 이미지를 저장하거나, <code>window.iconData</code>(크기 → base64 PNG)를 꺼내 쓰세요.</p>
+  <div class="row" id="light"></div>
+  <div class="row dark" id="dark"></div>
+  <script>
+    // 파란 둥근 사각형 + 흰 "64" + 디코딩 강조색(노랑) 밑줄
+    function draw(size) {
+      const c = document.createElement('canvas');
+      c.width = c.height = size;
+      const g = c.getContext('2d');
+      const s = size / 128;
+      const pad = size <= 16 ? 0 : 4 * s;
+      const r = 24 * s;
+
+      g.fillStyle = '#2563eb';
+      g.beginPath();
+      g.roundRect(pad, pad, size - pad * 2, size - pad * 2, r);
+      g.fill();
+
+      // 작은 크기에서는 글자를 더 크게
+      const fontPx = size <= 16 ? 11 : size <= 32 ? 21 : 66 * s;
+      g.fillStyle = '#ffffff';
+      g.font = `800 ${fontPx}px "Segoe UI", Arial, sans-serif`;
+      g.textAlign = 'center';
+      g.textBaseline = 'alphabetic';
+      const m = g.measureText('64');
+      const textH = m.actualBoundingBoxAscent;
+      const barH = Math.max(2, Math.round(10 * s));
+      const gap = Math.max(1, Math.round(8 * s));
+      const blockH = textH + gap + barH;
+      const top = (size - blockH) / 2;
+      const baseline = Math.round(top + textH);
+      g.fillText('64', size / 2, baseline);
+
+      const barW = Math.round(Math.max(m.width, 8) * 1.05);
+      g.fillStyle = '#facc15';
+      g.beginPath();
+      g.roundRect(Math.round((size - barW) / 2), baseline + gap, barW, barH, barH / 2);
+      g.fill();
+      return c;
+    }
+
+    window.iconData = {};
+    for (const size of [16, 32, 48, 128]) {
+      const c = draw(size);
+      window.iconData[size] = c.toDataURL('image/png').split(',')[1];
+      for (const id of ['light', 'dark']) {
+        const fig = document.createElement('figure');
+        const img = new Image();
+        img.src = c.toDataURL('image/png');
+        img.width = img.height = size;
+        const big = draw(size);
+        big.style.width = big.style.height = '128px';
+        big.style.imageRendering = 'pixelated';
+        fig.append(img, big, `${size}px`);
+        document.getElementById(id).append(fig);
+      }
+    }
+  </script>
+</body>
+</html>

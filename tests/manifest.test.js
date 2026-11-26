@@ -25,10 +25,26 @@ test('manifest가 가리키는 파일이 모두 있다', () => {
     manifest.action.default_popup,
     ...(manifest.options_ui ? [manifest.options_ui.page] : []),
     ...Object.values(manifest.icons || {}),
+    ...Object.values(manifest.action.default_icon || {}),
   ];
   for (const f of files) {
     assert.ok(fs.existsSync(path.join(root, f)), `없는 파일: ${f}`);
   }
+});
+
+test('아이콘: 16·32·48·128px PNG가 실제 그 크기다', () => {
+  assert.deepEqual(Object.keys(manifest.icons).sort(), ['128', '16', '32', '48']);
+  for (const [size, file] of Object.entries(manifest.icons)) {
+    const png = fs.readFileSync(path.join(root, file));
+    assert.equal(png.subarray(1, 4).toString(), 'PNG', file);
+    assert.equal(png.readUInt32BE(16), Number(size), `${file} 너비`);
+    assert.equal(png.readUInt32BE(20), Number(size), `${file} 높이`);
+  }
+});
+
+test('manifest와 package.json의 버전이 같다', () => {
+  const pkg = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  assert.equal(manifest.version, pkg.version);
 });
 
 test('browser-api.js가 콘텐츠 스크립트 중 가장 먼저 로드된다', () => {
