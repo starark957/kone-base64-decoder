@@ -1,11 +1,11 @@
 /*
- * Pretendard(SIL OFL 1.1, fonts/OFL.txt)에서 팝업에 쓰는 글자만 남긴 가변 폰트.
+ * Pretendard JP(SIL OFL 1.1, fonts/OFL.txt)에서 팝업에 쓰는 글자만 남긴 가변 폰트.
  * 수정본이라 OFL에 따라 이름을 "Popup Sans"로 바꿨다. 만드는 법: scripts/subset-font.py
  */
 @font-face {
   font-family: 'Popup Sans';
   src: url('fonts/popup-sans.woff2') format('woff2');
-  font-weight: 45 920;
+  font-weight: 45 930;
   font-display: block;
 }
 
