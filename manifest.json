@@ -9,6 +9,7 @@
       "matches": ["https://kone.gg/*"],
       "js": [
         "src/lib/browser-api.js",
+        "src/lib/base64.js",
         "src/lib/settings.js",
         "src/content/selectors.js",
         "src/content/content.js"
