@@ -24,29 +24,9 @@
       return () => ext.storage.onChanged.removeListener(listener);
     },
 
-    /**
-     * 메시지 수신. handler가 값을 돌려주면 응답으로 보내고,
-     * Promise를 돌려주면 끝난 뒤 응답한다. undefined면 응답하지 않는다.
-     */
-    onMessage(handler) {
-      ext.runtime.onMessage.addListener((message, sender, sendResponse) => {
-        const result = handler(message, sender);
-        if (result instanceof Promise) {
-          result.then(sendResponse, () => sendResponse(undefined));
-          return true;
-        }
-        if (result !== undefined) sendResponse(result);
-        return false;
-      });
-    },
-
-    async activeTab() {
-      const [tab] = await ext.tabs.query({ active: true, currentWindow: true });
-      return tab;
-    },
-
-    sendToTab(tabId, message) {
-      return ext.tabs.sendMessage(tabId, message);
+    /** 확장 버전 (manifest.json의 version) */
+    version() {
+      return ext.runtime.getManifest().version;
     },
   };
 

@@ -5,63 +5,46 @@
   <title>fixture: 팝업</title>
   <style>
     body { font: 14px/1.5 system-ui, 'Malgun Gothic', sans-serif; margin: 16px; }
-    .controls { display: flex; gap: 6px; align-items: center; margin-bottom: 12px; }
     .wrap { display: flex; gap: 16px; align-items: flex-start; }
+    #popup { flex: none; width: 362px; height: 200px; border: 1px solid #888; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
     #page { flex: 1; min-width: 0; height: 640px; border: 1px solid #ccc; }
-    #popup { flex: none; width: 260px; height: 200px; border: 1px solid #888; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
   </style>
 </head>
 <body>
-  <!-- 실제 팝업(src/popup/popup.html)을 그대로 띄우고, 옆의 코네 흉내 페이지와 가짜 chrome API로 연결한다. -->
-  <div class="controls">
-    <label>탭 페이지
-      <select id="target">
-        <option value="kone-post.html">게시물 (kone-post.html)</option>
-        <option value="kone-list.html">목록 (kone-list.html)</option>
-        <option value="none">코네가 아닌 탭</option>
-        <option value="no-script">콘텐츠 스크립트가 없는 코네 탭</option>
-      </select>
-    </label>
-  </div>
+  <!-- 실제 팝업(src/popup/popup.html)을 띄우고, 옆의 코네 흉내 페이지와 가짜 chrome 저장소를 공유한다.
+       팝업에서 설정을 바꾸면 옆 페이지에 바로 반영되는지 볼 수 있다. -->
   <div class="wrap">
     <iframe id="popup" title="팝업"></iframe>
-    <iframe id="page" title="탭 페이지"></iframe>
+    <iframe id="page" title="탭 페이지" src="kone-post.html"></iframe>
   </div>
 
   <script>
     const page = document.getElementById('page');
     const popup = document.getElementById('popup');
-    const target = document.getElementById('target');
 
-    async function open() {
-      const mode = target.value;
-      const src = mode === 'none' || mode === 'no-script' ? 'about:blank' : mode;
-      await new Promise((resolve) => { page.onload = resolve; page.src = src; });
+    page.addEventListener('load', async () => {
       const w = page.contentWindow;
-      // about:blank에도 브라우저 기본 window.chrome이 있으므로 storage 유무로 판단한다.
-      const storageChrome = w.chrome && w.chrome.storage ? w.chrome : {
-        // 콘텐츠 스크립트가 없는 탭: 저장소만 따로 흉내
-        storage: { sync: { get: async () => ({}), set: async () => {} }, onChanged: { addListener() {}, removeListener() {} } },
-        runtime: { onMessage: { addListener() {} } },
-      };
       window.__popupChrome = {
-        storage: storageChrome.storage,
-        runtime: storageChrome.runtime,
-        tabs: {
-          // 실제 확장처럼 tabs 권한이 없어 탭 주소(url)는 주지 않는다.
-          query: async () => [{ id: 1 }],
-          sendMessage: async (id, message) => {
-            if (!w.__stub) throw new Error('Could not establish connection. Receiving end does not exist.');
-            return w.__stub.sendMessage(message);
-          },
-        },
+        storage: w.chrome.storage,
+        runtime: { getManifest: () => ({ version: '0.0.0-fixture' }) },
       };
-      const html = await fetch('../../src/popup/popup.html').then((r) => r.text());
+      // 로컬 테스트 서버(python http.server)가 가끔 첫 요청을 끊어서 몇 번 다시 시도한다
+      let html;
+      for (let i = 0; i < 5 && !html; i++) {
+        try {
+          html = await fetch('../../src/popup/popup.html', { cache: 'no-store' }).then((r) => r.text());
+        } catch {
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+      popup.onload = () => {
+        // 팝업 내용 높이에 맞춘다(실제 팝업 창처럼)
+        const fit = () => { popup.style.height = popup.contentDocument.documentElement.scrollHeight + 'px'; };
+        fit();
+        new ResizeObserver(fit).observe(popup.contentDocument.body);
+      };
       popup.srcdoc = html.replace('<head>', '<head><base href="../../src/popup/"><script>window.chrome = parent.__popupChrome;<\/script>');
-    }
-
-    target.onchange = open;
-    open();
+    }, { once: true });
   </script>
 </body>
 </html>
