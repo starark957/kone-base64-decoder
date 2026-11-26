@@ -50,6 +50,7 @@
     span.dataset.b64dDecoded = m.text;
     span.dataset.b64dDepth = String(m.depth);
     span.dataset.b64dShowing = 'decoded';
+    if (/[\r\n]/.test(m.text)) span.classList.add(`${CLS}-multiline`);
 
     if (linkify && !inLink && base64.isHttpUrl(m.text)) {
       span.classList.add(`${CLS}-link`);

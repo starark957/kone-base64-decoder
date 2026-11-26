@@ -8,8 +8,14 @@
     postBody: '#post-article .article-prose',
     /** 게시물 제목 (링크 아님) */
     postTitle: '#post-article header h1',
-    /** 게시판 목록 행: 행 전체가 <a>, 안쪽 div[title]에 전체 제목이 있다. 정확한 제목 span 선택은 M4에서 확정 */
-    listRow: 'a div[title]',
+    /**
+     * 게시판 목록 제목. 행 전체가 <a>이고 한 행에 데스크톱·모바일 레이아웃이 함께 있다.
+     * 같은 클래스의 span이 작성자 칸에도 쓰이므로 위치로 고른다.
+     */
+    listTitle: [
+      'a[href*="/s/"] div[title] > div.min-w-0 > div.flex > span.text-ellipsis',
+      'a[href*="/s/"] .md\\:hidden div.flex-col > div.flex.overflow-hidden > span.text-ellipsis',
+    ].join(', '),
     /** 처리하지 않을 요소 */
     skip: 'script, style, noscript, textarea, input, [contenteditable="true"]',
   });
