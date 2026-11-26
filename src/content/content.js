@@ -40,8 +40,10 @@
   }
 
   function scan() {
+    if (timer) clearTimeout(timer);
     timer = 0;
     if (!current.enabled) return;
+    const t0 = performance.now();
     withoutObserver(() => {
       replacer.reconcile();
       for (const area of areas(current)) {
@@ -51,10 +53,41 @@
       }
     });
     document.documentElement.dataset.b64dCount = String(replacer.countAll());
+    debug.scans++;
+    debug.lastScanMs = performance.now() - t0;
   }
 
-  function schedule() {
-    if (timer) clearTimeout(timer);
+  /** 테스트용 계측값 (처리 횟수, 마지막 처리 시간) */
+  const debug = { scans: 0, lastScanMs: 0 };
+  root.B64D.debug = debug;
+
+  /** 처리 대상 영역 전체를 한 번에 고르는 선택자 */
+  function areaUnion() {
+    return areas(current).map((a) => a.selector).join(', ');
+  }
+
+  /** 바뀐 곳이 처리 대상 영역과 관련 있는지. 시계·조회수 같은 다른 곳의 변경은 무시한다. */
+  function isRelevant(records) {
+    const union = areaUnion();
+    for (const r of records) {
+      const el = r.target.nodeType === Node.ELEMENT_NODE ? r.target : r.target.parentElement;
+      if (!el) continue;
+      if (el.closest(union)) return true;
+      if (r.type === 'childList') {
+        for (const n of r.addedNodes) {
+          if (n.nodeType === Node.ELEMENT_NODE && (n.matches(union) || n.querySelector(union))) return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  /**
+   * 관련 변경이 생기면 DEBOUNCE_MS 뒤에 한 번 처리한다.
+   * 이미 예약돼 있으면 미루지 않는다(변경이 계속 이어져도 처리가 무한히 밀리지 않게).
+   */
+  function onMutations(records) {
+    if (!current.enabled || timer || !isRelevant(records)) return;
     timer = setTimeout(scan, DEBOUNCE_MS);
   }
 
@@ -74,7 +107,7 @@
   });
 
   replacer.installClickHandler();
-  observer = new MutationObserver(schedule);
+  observer = new MutationObserver(onMutations);
 
   function start() {
     settings.load().then((s) => {
