@@ -12,7 +12,7 @@
 - 설치(개발자 모드): `chrome://extensions` → 개발자 모드 켜기 → "압축해제된 확장 프로그램을 로드합니다" → 이 저장소 폴더 선택. 삼성 인터넷(PC)은 "압축 해제된 추가 기능 불러오기"로 같은 폴더(또는 `npm run pack`으로 만든 zip을 푼 폴더)를 고릅니다.
 - 패키징: `npm run pack` → `dist/kone-base64-decoder-<버전>.zip` (manifest.json, icons/, src/만 포함. 버전은 manifest.json과 package.json을 함께 올립니다).
 - 아이콘: `scripts/icons.html`을 브라우저로 열어 다시 그릴 수 있습니다(결과는 `icons/`).
-- 팝업 폰트: Pretendard(SIL OFL 1.1)에서 팝업에 쓰는 글자만 남긴 가변 폰트 `src/popup/fonts/popup-sans.woff2`(약 55KB). OFL에 따라 수정본 이름은 "Popup Sans"이고 라이선스는 `src/popup/fonts/OFL.txt`. 팝업 문구를 바꾸면 `python scripts/subset-font.py <PretendardVariable.woff2>`로 다시 만듭니다(fonttools, brotli 필요).
+- 팝업 폰트: Pretendard JP(SIL OFL 1.1)에서 팝업에 쓰는 글자만 남긴 가변 폰트 `src/popup/fonts/popup-sans.woff2`(약 55KB). OFL에 따라 수정본 이름은 "Popup Sans"이고 라이선스는 `src/popup/fonts/OFL.txt`. 팝업 문구를 바꾸면 `python scripts/subset-font.py <PretendardJPVariable.woff2>`로 다시 만듭니다(fonttools, brotli 필요). 원본은 항상 Pretendard JP를 쓰고, 한자가 필요하면 여기서 가져옵니다.
 
 ## 문서
 

@@ -1,12 +1,16 @@
-"""팝업용 폰트를 만든다: Pretendard 가변 폰트에서 팝업에 쓰는 글자만 남긴다.
+"""팝업용 폰트를 만든다: Pretendard JP 가변 폰트에서 팝업에 쓰는 글자만 남긴다.
+
+원본은 항상 Pretendard JP를 쓴다(한글·영문에 더해 한자·일본어 글자도 들어 있어서,
+문구에 한자가 들어가도 같은 폰트에서 가져온다).
 
 사용법 (fonttools, brotli 필요: pip install fonttools brotli)
-    python scripts/subset-font.py <PretendardVariable.woff2 경로>
+    python scripts/subset-font.py <PretendardJPVariable.woff2 경로>
 
-원본: https://github.com/orioncactus/pretendard (npm pretendard 1.3.9의
-dist/web/variable/woff2/PretendardVariable.woff2)
+원본: https://github.com/orioncactus/pretendard v1.3.9의
+packages/pretendard-jp/dist/web/variable/woff2/PretendardJPVariable.woff2
+(라이선스: packages/pretendard-jp/dist/LICENSE.txt → src/popup/fonts/OFL.txt)
 
-Pretendard는 SIL Open Font License 1.1이고 "Pretendard"가 예약 글꼴 이름이다.
+Pretendard JP는 SIL Open Font License 1.1이고 "Pretendard JP"가 예약 글꼴 이름이다.
 글자를 줄인 것은 수정본이므로 글꼴 이름을 바꿔서 저장한다(OFL 3항).
 팝업 문구를 바꾸면 이 스크립트를 다시 돌려야 새 글자가 들어간다.
 """
@@ -20,7 +24,7 @@ from fontTools.ttLib import TTFont
 ROOT = Path(__file__).resolve().parent.parent
 SOURCES = [ROOT / 'src/popup/popup.html', ROOT / 'src/popup/popup.js']
 OUT = ROOT / 'src/popup/fonts/popup-sans.woff2'
-NEW_FAMILY = 'Popup Sans'  # 예약 이름(Pretendard) 대신 쓰는 이름
+NEW_FAMILY = 'Popup Sans'  # 예약 이름(Pretendard JP) 대신 쓰는 이름
 NEW_PS = 'PopupSans'
 
 # 숫자·영문·기호(버전, Base64, 주소 등)와 자주 쓰는 문장 부호
@@ -42,9 +46,9 @@ def rename(font):
         if 'Pretendard' not in s:
             continue
         if rec.nameID == 6 or rec.nameID == 25:  # PostScript 이름류: 공백 없음
-            s = s.replace('Pretendard', NEW_PS)
+            s = s.replace('PretendardJP', NEW_PS).replace('Pretendard', NEW_PS)
         else:
-            s = s.replace('Pretendard', NEW_FAMILY)
+            s = s.replace('Pretendard JP', NEW_FAMILY).replace('Pretendard', NEW_FAMILY)
         rec.string = s
 
 
