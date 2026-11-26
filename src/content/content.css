@@ -1,45 +1,160 @@
-/* 디코딩된 구간 표시 */
-.b64d {
+/*
+ * 디코딩된 구간 표시.
+ * 색은 모두 글자색(currentColor)을 옅게 섞어 만들어서 코네의 라이트·다크 테마를 따로 알 필요가 없다.
+ * 코네 본문 스타일(링크·버튼·svg)에 덮이지 않도록 선택자를 .b64d.b64d-… 두 단계로 쓴다.
+ */
+
+.b64d [hidden] {
+  display: none !important;
+}
+
+/* ── 글자로 풀린 결과(제목·목록 제목·본문 문장) ── */
+.b64d.b64d-text {
   background-color: rgba(250, 204, 21, 0.25);
   border-radius: 3px;
   padding: 0 2px;
 }
 
 /* 결과에 줄바꿈이 있을 때만 줄을 살린다(목록 제목의 한 줄 말줄임을 깨지 않게). */
-.b64d-multiline {
+.b64d.b64d-multiline {
   white-space: pre-wrap;
 }
 
-.b64d[data-b64d-clickable] {
+.b64d.b64d-text[data-b64d-clickable] {
   cursor: pointer;
 }
 
-.b64d[data-b64d-showing='original'] {
+.b64d.b64d-text[data-b64d-showing='original'] {
   background-color: rgba(148, 163, 184, 0.25);
 }
 
-.b64d [hidden] {
-  display: none !important;
+/* ── 주소로 풀린 결과(본문): 한 줄을 따로 차지하는 카드 ── */
+.b64d.b64d-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  max-width: 640px;
+  margin: 6px 0;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  line-height: 1.35;
+  text-indent: 0;
+  transition: border-color 0.15s;
 }
 
-.b64d-url {
-  text-decoration: underline;
-  word-break: break-all;
+.b64d.b64d-card:hover {
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
 }
 
-.b64d-toggle {
-  margin-left: 2px;
-  padding: 0 3px;
-  border: 0;
-  background: none;
+.b64d.b64d-card[data-b64d-showing='original'] {
+  border-style: dashed;
+}
+
+.b64d .b64d-ico {
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 왼쪽 표시: 버튼과 헷갈리지 않게 색이 채워진 네모(누르는 기능 없음) */
+.b64d .b64d-badge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: color-mix(in srgb, currentColor 11%, transparent);
+  opacity: 0.85;
+}
+
+.b64d .b64d-body {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  transition: opacity 0.18s;
+}
+
+.b64d .b64d-body.is-fading {
+  opacity: 0;
+}
+
+.b64d .b64d-url,
+.b64d .b64d-raw,
+.b64d .b64d-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.b64d a.b64d-url {
   color: inherit;
-  opacity: 0.6;
-  cursor: pointer;
-  font: inherit;
-  line-height: inherit;
+  font-weight: 700;
+  text-decoration: none;
 }
 
-.b64d-toggle:hover,
-.b64d-toggle:focus-visible {
+.b64d a.b64d-url:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.b64d .b64d-raw {
+  font: 600 13px/1.5 ui-monospace, Consolas, monospace;
+}
+
+.b64d .b64d-sub {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.b64d button.b64d-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+}
+
+.b64d button.b64d-btn:hover,
+.b64d button.b64d-btn:focus-visible,
+.b64d button.b64d-btn.is-done {
+  background: color-mix(in srgb, currentColor 12%, transparent);
   opacity: 1;
+}
+
+.b64d button.b64d-btn.is-spinning .b64d-ico {
+  animation: b64d-spin 0.45s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+@keyframes b64d-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .b64d button.b64d-btn.is-spinning .b64d-ico {
+    animation: none;
+  }
+
+  .b64d .b64d-body {
+    transition: none;
+  }
 }
