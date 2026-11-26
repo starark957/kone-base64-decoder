@@ -61,11 +61,11 @@
 .b64d.b64d-card {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   box-sizing: border-box;
   max-width: 640px;
   margin: 6px 0;
-  padding: 6px;
+  padding: 8px 8px 8px 12px; /* 왼쪽 = 강조선 3px + 여백 9px */
   border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   border-radius: 10px;
   background: color-mix(in srgb, currentColor 5%, transparent);
@@ -101,6 +101,11 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--b64d-hl) 22%, transparent);
   color: var(--b64d-hl);
+}
+
+/* 복사·전환 버튼은 한 묶음으로 붙여 둔다(버튼 사이 4px) */
+.b64d .b64d-copy + .b64d-toggle {
+  margin-left: -6px;
 }
 
 .b64d .b64d-body {
@@ -207,10 +212,10 @@
   z-index: 2147483000;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   box-sizing: border-box;
   max-width: min(520px, calc(100vw - 16px));
-  padding: 8px 6px 8px 12px;
+  padding: 8px 8px 8px 15px; /* 왼쪽 = 강조선 3px + 여백 12px */
   border: 1px solid rgba(15, 23, 42, 0.14);
   border-radius: 10px;
   background: #ffffff;
