@@ -5,7 +5,10 @@
 
   const { settings, selectors, base64, replacer } = root.B64D;
 
-  const DEBOUNCE_MS = 200;
+  /** 처리가 무거울 때(긴 글 등) 다음 처리까지 기다리는 시간 */
+  const THROTTLE_MS = 200;
+  /** 마지막 처리가 이보다 빨랐으면 기다리지 않고 바로 처리한다(화면에 원문이 한 번도 안 보이게) */
+  const CHEAP_SCAN_MS = 8;
 
   let current = settings.normalize(undefined);
   let observer = null;
@@ -71,12 +74,16 @@
   }
 
   /**
-   * 관련 변경이 생기면 DEBOUNCE_MS 뒤에 한 번 처리한다.
-   * 이미 예약돼 있으면 미루지 않는다(변경이 계속 이어져도 처리가 무한히 밀리지 않게).
+   * 관련 변경이 생기면 처리한다.
+   * - 처리가 가벼우면(지난번 CHEAP_SCAN_MS 미만) 바로 처리한다. 화면 감시 콜백은 브라우저가
+   *   화면을 그리기 전에 실행되므로, 글 이동·뒤로·앞으로 가기에서 원문이 깜빡 보이지 않는다.
+   * - 무거우면 THROTTLE_MS 뒤에 한 번 처리한다. 이미 예약돼 있으면 미루지 않는다
+   *   (변경이 계속 이어져도 처리가 무한히 밀리지 않게).
    */
   function onMutations(records) {
     if (!current.enabled || timer || !isRelevant(records)) return;
-    timer = setTimeout(scan, DEBOUNCE_MS);
+    if (debug.lastScanMs < CHEAP_SCAN_MS) scan();
+    else timer = setTimeout(scan, THROTTLE_MS);
   }
 
   function applySettings(next) {
