@@ -39,10 +39,15 @@
   }
 
   function tooltip(m, clickable) {
+    if (clickable) return '클릭하면 Base64 원문 보기';
     let t = `원문: ${m.original}`;
     if (m.depth > 1) t += ` · ${m.depth}단계 디코딩`;
-    if (clickable) t += ' · 클릭하면 원문/결과 전환';
     return t;
+  }
+
+  function depthNote(span) {
+    const depth = Number(span.dataset.b64dDepth);
+    return depth > 1 ? ` · ${depth}단계 디코딩` : '';
   }
 
   /** 아이콘(선 24×24). 고정된 경로만 쓰고 페이지 내용은 넣지 않는다. */
@@ -131,10 +136,7 @@
     span.querySelector(`.${CLS}-raw`).hidden = !original;
     span.querySelector(`.${CLS}-badge`).replaceChildren(icon(original ? 'code' : 'link'));
 
-    const depth = Number(span.dataset.b64dDepth);
-    let sub = original ? 'Base64 원문' : span.dataset.b64dHost;
-    if (original && depth > 1) sub += ` · ${depth}단계 디코딩`;
-    span.querySelector(`.${CLS}-sub`).textContent = sub;
+    span.querySelector(`.${CLS}-sub`).textContent = original ? `Base64 원문${depthNote(span)}` : span.dataset.b64dHost;
 
     const labels = [
       [`.${CLS}-copy`, original ? '원문 복사' : '주소 복사'],
@@ -166,7 +168,11 @@
     if (/[\r\n]/.test(m.text)) span.classList.add(`${CLS}-multiline`);
 
     const clickable = !inLink;
-    if (clickable) span.dataset.b64dClickable = '';
+    if (clickable) {
+      span.dataset.b64dClickable = '';
+      span.setAttribute('aria-haspopup', 'dialog');
+      span.setAttribute('aria-expanded', 'false');
+    }
     span.title = tooltip(m, clickable);
     span.textContent = m.text;
     return span;
@@ -204,6 +210,7 @@
 
   /** 프레임워크가 내용을 바꾼 원래 노드의 예전 뒷부분을 걷어낸다. 걷어낸 개수를 돌려준다. */
   function reconcile() {
+    if (pop && !pop.anchor.isConnected) closePopover(); // 화면이 바뀌어 원래 글자가 사라졌으면 닫는다
     let removed = 0;
     for (const [node, rec] of tracked) {
       if (!node.isConnected) {
@@ -232,6 +239,7 @@
 
   /** 치환한 요소를 모두 원문 텍스트로 되돌린다. */
   function restoreAll(scope = document) {
+    closePopover();
     for (const el of scope.querySelectorAll(`.${CLS}`)) {
       el.replaceWith(document.createTextNode(el.dataset.b64dOriginal || ''));
     }
@@ -241,11 +249,6 @@
 
   function countAll(scope = document) {
     return scope.querySelectorAll(`.${CLS}`).length;
-  }
-
-  function setShowing(span, showing) {
-    span.dataset.b64dShowing = showing;
-    span.textContent = showing === 'original' ? span.dataset.b64dOriginal : span.dataset.b64dDecoded;
   }
 
   const FADE_MS = 180;
@@ -288,11 +291,8 @@
     }
   }
 
-  /** 카드의 복사 버튼: 지금 보이는 쪽(주소 또는 원문)을 복사하고 잠깐 체크 표시를 띄운다. */
-  async function copyCard(btn) {
-    const span = btn.closest(`.${CLS}-card`);
-    const original = span.dataset.b64dShowing === 'original';
-    const text = original ? span.dataset.b64dOriginal : span.dataset.b64dDecoded.trim();
+  /** 복사 버튼: text를 복사하고 잠깐 체크 표시를 띄운다. */
+  async function copyWithFeedback(btn, text) {
     if (!(await writeClipboard(text))) return;
     btn.replaceChildren(icon('check'));
     btn.classList.add('is-done');
@@ -303,7 +303,67 @@
     }, 1200);
   }
 
-  /** 문서 전체에 한 번만 다는 클릭 처리(원문/결과 전환, 복사). */
+  /** 카드의 복사 버튼: 지금 보이는 쪽(주소 또는 원문)을 복사한다. */
+  function copyCard(btn) {
+    const span = btn.closest(`.${CLS}-card`);
+    const original = span.dataset.b64dShowing === 'original';
+    copyWithFeedback(btn, original ? span.dataset.b64dOriginal : span.dataset.b64dDecoded.trim());
+  }
+
+  /**
+   * 글자 결과의 원문 말풍선. 글자 자체를 원문으로 바꾸면 길이가 달라져 주변 글이 밀리므로,
+   * 원문은 글자 아래(자리가 없으면 위)에 띄운다. 한 번에 하나만 열린다.
+   * 말풍선은 처리 대상 영역 밖(body 끝)에 붙여서 화면 감시에 걸리지 않게 한다.
+   */
+  let pop = null; // { el, anchor }
+
+  function openPopover(anchor) {
+    closePopover();
+    const box = el('div', `${CLS}-pop`);
+    box.setAttribute('role', 'dialog');
+    box.setAttribute('aria-label', 'Base64 원문');
+
+    const text = el('div', `${CLS}-pop-text`);
+    text.append(
+      el('span', `${CLS}-pop-label`, `Base64 원문${depthNote(anchor)}`),
+      el('span', `${CLS}-pop-raw`, anchor.dataset.b64dOriginal),
+    );
+    const copy = button(`${CLS}-pop-copy`, 'copy');
+    copy.title = '원문 복사';
+    copy.setAttribute('aria-label', '원문 복사');
+    box.append(text, copy);
+
+    document.body.append(box);
+    pop = { el: box, anchor };
+    anchor.classList.add('is-open');
+    anchor.setAttribute('aria-expanded', 'true');
+    placePopover();
+  }
+
+  function closePopover() {
+    if (!pop) return;
+    pop.el.remove();
+    pop.anchor.classList.remove('is-open');
+    pop.anchor.setAttribute('aria-expanded', 'false');
+    pop = null;
+  }
+
+  function placePopover() {
+    if (!pop) return;
+    const GAP = 6;
+    const MARGIN = 8;
+    // 여러 줄로 나뉜 글자면 처음 눌린 줄이 아니라 첫 줄을 기준으로 한다
+    const r = pop.anchor.getClientRects()[0] || pop.anchor.getBoundingClientRect();
+    const w = pop.el.offsetWidth;
+    const h = pop.el.offsetHeight;
+    const left = Math.max(MARGIN, Math.min(r.left, innerWidth - w - MARGIN));
+    const below = r.bottom + GAP;
+    const top = below + h > innerHeight - MARGIN && r.top - GAP - h > MARGIN ? r.top - GAP - h : below;
+    pop.el.style.left = `${left + scrollX}px`;
+    pop.el.style.top = `${top + scrollY}px`;
+  }
+
+  /** 문서 전체에 한 번만 다는 처리(원문 보기, 복사, 말풍선 닫기). */
   function installClickHandler(doc = document) {
     doc.addEventListener('click', (e) => {
       const target = e.target instanceof Element ? e.target : null;
@@ -318,12 +378,30 @@
         return;
       }
 
+      if (pop && pop.el.contains(target)) {
+        const copy = target.closest(`.${CLS}-pop-copy`);
+        if (copy) {
+          e.preventDefault();
+          copyWithFeedback(copy, pop.anchor.dataset.b64dOriginal);
+        }
+        return; // 말풍선 안을 누른 것(글자 고르기 등)은 닫지 않는다
+      }
+
       const span = target.closest(`.${CLS}[data-b64d-clickable]`);
-      if (!span) return;
+      if (!span) {
+        closePopover();
+        return;
+      }
       const sel = doc.getSelection && doc.getSelection();
-      if (sel && !sel.isCollapsed) return; // 글자를 드래그해 고르는 중이면 전환하지 않는다
-      setShowing(span, span.dataset.b64dShowing === 'original' ? 'decoded' : 'original');
+      if (sel && !sel.isCollapsed) return; // 글자를 드래그해 고르는 중이면 열지 않는다
+      if (pop && pop.anchor === span) closePopover();
+      else openPopover(span);
     });
+
+    doc.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closePopover();
+    });
+    root.addEventListener('resize', placePopover);
   }
 
   const replacer = { decorateArea, decorateTextNode, reconcile, restoreAll, countAll, installClickHandler };
