@@ -1,13 +1,26 @@
-/* 디코딩된 구간 표시 (M3부터 사용) */
+/* 디코딩된 구간 표시 */
 .b64d {
   background-color: rgba(250, 204, 21, 0.25);
   border-radius: 3px;
   padding: 0 2px;
+  white-space: pre-wrap;
+}
+
+.b64d[data-b64d-clickable] {
   cursor: pointer;
 }
 
 .b64d[data-b64d-showing='original'] {
   background-color: rgba(148, 163, 184, 0.25);
+}
+
+.b64d [hidden] {
+  display: none !important;
+}
+
+.b64d-url {
+  text-decoration: underline;
+  word-break: break-all;
 }
 
 .b64d-toggle {
@@ -19,8 +32,10 @@
   opacity: 0.6;
   cursor: pointer;
   font: inherit;
+  line-height: inherit;
 }
 
-.b64d-toggle:hover {
+.b64d-toggle:hover,
+.b64d-toggle:focus-visible {
   opacity: 1;
 }

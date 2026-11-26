@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>fixture: 코네 게시물</title>
+  <link rel="stylesheet" href="../../src/content/content.css">
+  <style>
+    body { font: 15px/1.6 system-ui, 'Malgun Gothic', sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    #post-comment { margin-top: 24px; padding-top: 12px; border-top: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button id="toggle-enabled">켜기·끄기</button>
+    <button id="toggle-titles">제목 디코딩 켜기·끄기</button>
+    <button id="rewrite-title">제목 텍스트 바꾸기 (프레임워크 갱신 흉내)</button>
+    <button id="swap-body">본문 통째로 교체 (게시물 이동 흉내)</button>
+  </div>
+
+  <div class="mx-auto w-full px-4">
+    <div id="post-article">
+      <header>
+        <div class="mb-3 flex items-start">
+          <div class="min-w-0"><h1 class="min-w-0 pt-1 pb-2">[번역] Qw== RJ071591</h1></div>
+        </div>
+      </header>
+      <div class="article-prose">
+        <p id="p-url">링크: aHR0cHM6Ly9leGFtcGxlLmNvbS90ZXN0 입니다</p>
+        <p id="p-ko">7JWI64WV7ZWY7IS47JqU</p>
+        <p id="p-dbl">두 번: YUhSMGNITTZMeTlsZUdGdGNHeGxMbU52YlM5dVpYTjBaV1E9</p>
+        <p id="p-xss">XSS: PGltZyBzcmM9eCBvbmVycm9yPWFsZXJ0KDEpPg==</p>
+        <p id="p-js">스킴: amF2YXNjcmlwdDphbGVydCgxKQ==</p>
+        <p id="p-multi">여러 줄: 7LKrIOykhArrkZjsp7gg7KSE</p>
+        <p id="p-none">internationalization c2ArRWdThcQlvW0oQ56j0b 9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08 Qw==</p>
+        <p id="p-link">링크 안: <a href="#link">7JWI64WV7ZWY7IS47JqU</a></p>
+        <textarea id="ta">7JWI64WV7ZWY7IS47JqU</textarea>
+      </div>
+    </div>
+    <div id="post-comment"><p id="c1">댓글: 7JWI64WV7ZWY7IS47JqU</p></div>
+  </div>
+
+  <script src="chrome-stub.js"></script>
+  <script src="../../src/lib/browser-api.js"></script>
+  <script src="../../src/lib/base64.js"></script>
+  <script src="../../src/lib/settings.js"></script>
+  <script src="../../src/content/selectors.js"></script>
+  <script src="../../src/content/replacer.js"></script>
+  <script src="../../src/content/content.js"></script>
+  <script>
+    // 2초 뒤에 본문 문단이 추가되는 경우
+    setTimeout(() => {
+      const p = document.createElement('p');
+      p.id = 'p-late';
+      p.textContent = '늦게 추가: Muy0iCDrkqTsl5Ag7LaU6rCA65CcIOusuOyepeyeheuLiOuLpA==';
+      document.querySelector('.article-prose').append(p);
+    }, 2000);
+
+    const { settings } = globalThis.B64D;
+    document.getElementById('toggle-enabled').onclick = async () => {
+      const s = await settings.load();
+      settings.save({ enabled: !s.enabled });
+    };
+    document.getElementById('toggle-titles').onclick = async () => {
+      const s = await settings.load();
+      settings.save({ decodeTitles: !s.decodeTitles });
+    };
+    // 프레임워크가 원래 텍스트 노드의 내용만 바꾸는 경우
+    const titleNode = document.querySelector('#post-article h1').firstChild;
+    document.getElementById('rewrite-title').onclick = () => {
+      titleNode.data = '새 게시물 7IOIIOygnOuqqQ==';
+    };
+    document.getElementById('swap-body').onclick = () => {
+      document.querySelector('.article-prose').innerHTML =
+        '<p id="p-swap">교체: 6rWQ7LK065CcIOuzuOusuOydmCDrrLjsnqXsnoXri4jri6Q=</p>';
+    };
+  </script>
+</body>
+</html>

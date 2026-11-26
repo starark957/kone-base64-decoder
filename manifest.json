@@ -12,6 +12,7 @@
         "src/lib/base64.js",
         "src/lib/settings.js",
         "src/content/selectors.js",
+        "src/content/replacer.js",
         "src/content/content.js"
       ],
       "css": ["src/content/content.css"],
