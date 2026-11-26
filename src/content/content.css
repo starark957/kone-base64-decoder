@@ -1,0 +1,26 @@
+/* 디코딩된 구간 표시 (M3부터 사용) */
+.b64d {
+  background-color: rgba(250, 204, 21, 0.25);
+  border-radius: 3px;
+  padding: 0 2px;
+  cursor: pointer;
+}
+
+.b64d[data-b64d-showing='original'] {
+  background-color: rgba(148, 163, 184, 0.25);
+}
+
+.b64d-toggle {
+  margin-left: 2px;
+  padding: 0 3px;
+  border: 0;
+  background: none;
+  color: inherit;
+  opacity: 0.6;
+  cursor: pointer;
+  font: inherit;
+}
+
+.b64d-toggle:hover {
+  opacity: 1;
+}

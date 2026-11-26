@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>코네 Base64 디코더</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="row">
+    <h1>코네 Base64 디코더</h1>
+    <label class="switch" title="전체 켜기·끄기">
+      <input type="checkbox" id="enabled" aria-label="자동 디코딩 켜기">
+      <span class="slider" aria-hidden="true"></span>
+    </label>
+  </header>
+
+  <p class="status" id="status">불러오는 중…</p>
+
+  <script src="../lib/browser-api.js"></script>
+  <script src="../lib/settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>
