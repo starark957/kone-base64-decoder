@@ -1,45 +1,203 @@
-/* 디코딩된 구간 표시 */
+/*
+ * 디코딩된 구간 표시.
+ * - 파란색 = 확장이 풀어 준 것. 글자 결과는 파란 칩 + 왼쪽 강조선, 주소 결과는 카드(왼쪽 강조선·파란 표시).
+ * - 코네는 다크 모드일 때 <html class="dark">를 쓴다(2026-11-27 확인). 이 클래스로 파랑의 밝기를 고른다.
+ *   클래스가 바뀌면 라이트용 색으로 보일 뿐 글자는 계속 읽힌다.
+ * - 카드의 테두리·배경은 글자색(currentColor)을 옅게 섞어 테마를 따로 알 필요가 없다.
+ * - 코네 본문 스타일(링크·버튼·svg)에 덮이지 않도록 선택자를 .b64d.b64d-… 두 단계로 쓴다.
+ */
+
 .b64d {
-  background-color: rgba(250, 204, 21, 0.25);
-  border-radius: 3px;
-  padding: 0 2px;
+  --b64d-hl: #2563eb;
+  --b64d-text-fill: color-mix(in srgb, var(--b64d-hl) 20%, transparent);
+  --b64d-text-fill-hover: color-mix(in srgb, var(--b64d-hl) 30%, transparent);
+  --b64d-text-color: #1e3a8a;
 }
 
-/* 결과에 줄바꿈이 있을 때만 줄을 살린다(목록 제목의 한 줄 말줄임을 깨지 않게). */
-.b64d-multiline {
-  white-space: pre-wrap;
-}
-
-.b64d[data-b64d-clickable] {
-  cursor: pointer;
-}
-
-.b64d[data-b64d-showing='original'] {
-  background-color: rgba(148, 163, 184, 0.25);
+:root.dark .b64d {
+  --b64d-hl: #60a5fa;
+  --b64d-text-fill: color-mix(in srgb, var(--b64d-hl) 40%, transparent);
+  --b64d-text-fill-hover: color-mix(in srgb, var(--b64d-hl) 55%, transparent);
+  --b64d-text-color: #eef4ff;
 }
 
 .b64d [hidden] {
   display: none !important;
 }
 
-.b64d-url {
-  text-decoration: underline;
-  word-break: break-all;
+/* ── 글자로 풀린 결과(제목·목록 제목·본문 문장): 파란 칩 + 왼쪽 강조선 ── */
+.b64d.b64d-text {
+  padding: 0.05em 0.4em 0.05em 0.45em;
+  border-radius: 0.2em 0.38em 0.38em 0.2em;
+  background-color: var(--b64d-text-fill);
+  box-shadow: inset 3px 0 0 var(--b64d-hl);
+  color: var(--b64d-text-color);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone; /* 두 줄로 넘어가도 줄마다 칩 모양 유지 */
+  transition: background-color 0.15s;
 }
 
-.b64d-toggle {
-  margin-left: 2px;
-  padding: 0 3px;
-  border: 0;
-  background: none;
-  color: inherit;
-  opacity: 0.6;
+/* 결과에 줄바꿈이 있을 때만 줄을 살린다(목록 제목의 한 줄 말줄임을 깨지 않게). */
+.b64d.b64d-multiline {
+  white-space: pre-wrap;
+}
+
+.b64d.b64d-text[data-b64d-clickable] {
   cursor: pointer;
-  font: inherit;
-  line-height: inherit;
 }
 
-.b64d-toggle:hover,
-.b64d-toggle:focus-visible {
+.b64d.b64d-text[data-b64d-clickable]:hover {
+  background-color: var(--b64d-text-fill-hover);
+}
+
+/* 원문 상태: 칠을 빼고 점선 테두리 + 고정폭 글꼴(카드와 같은 규칙) */
+.b64d.b64d-text[data-b64d-showing='original'] {
+  background-color: transparent;
+  box-shadow: none;
+  color: inherit;
+  outline: 1.5px dashed color-mix(in srgb, currentColor 45%, transparent);
+  outline-offset: -1.5px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 0.88em;
+}
+
+/* ── 주소로 풀린 결과(본문): 한 줄을 따로 차지하는 카드 ── */
+.b64d.b64d-card {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-sizing: border-box;
+  max-width: 640px;
+  margin: 6px 0;
+  padding: 6px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  box-shadow: inset 3px 0 0 var(--b64d-hl);
+  line-height: 1.35;
+  text-indent: 0;
+  transition: border-color 0.15s;
+}
+
+.b64d.b64d-card:hover {
+  border-color: color-mix(in srgb, currentColor 30%, transparent);
+}
+
+.b64d.b64d-card[data-b64d-showing='original'] {
+  border-style: dashed;
+}
+
+.b64d .b64d-ico {
+  display: block;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 왼쪽 표시: 버튼과 헷갈리지 않게 파랗게 채워진 네모(누르는 기능 없음) */
+.b64d .b64d-badge {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--b64d-hl) 22%, transparent);
+  color: var(--b64d-hl);
+}
+
+.b64d.b64d-card[data-b64d-showing='original'] {
+  box-shadow: none;
+}
+
+.b64d.b64d-card[data-b64d-showing='original'] .b64d-badge {
+  background: color-mix(in srgb, currentColor 11%, transparent);
+  color: inherit;
+}
+
+.b64d .b64d-body {
+  display: grid;
+  flex: 1;
+  min-width: 0;
+  transition: opacity 0.18s;
+}
+
+.b64d .b64d-body.is-fading {
+  opacity: 0;
+}
+
+.b64d .b64d-url,
+.b64d .b64d-raw,
+.b64d .b64d-sub {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.b64d a.b64d-url {
+  color: inherit;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.b64d a.b64d-url:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.b64d .b64d-raw {
+  font: 600 13px/1.5 ui-monospace, Consolas, monospace;
+}
+
+.b64d .b64d-sub {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+.b64d button.b64d-btn {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.55;
+  cursor: pointer;
+  transition: background-color 0.15s, opacity 0.15s;
+}
+
+.b64d button.b64d-btn:hover,
+.b64d button.b64d-btn:focus-visible,
+.b64d button.b64d-btn.is-done {
+  background: color-mix(in srgb, currentColor 12%, transparent);
   opacity: 1;
+}
+
+.b64d button.b64d-btn.is-spinning .b64d-ico {
+  animation: b64d-spin 0.45s cubic-bezier(0.3, 0.7, 0.3, 1);
+}
+
+@keyframes b64d-spin {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .b64d button.b64d-btn.is-spinning .b64d-ico {
+    animation: none;
+  }
+
+  .b64d .b64d-body {
+    transition: none;
+  }
 }

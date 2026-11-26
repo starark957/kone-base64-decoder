@@ -45,9 +45,111 @@
     return t;
   }
 
+  /** 아이콘(선 24×24). 고정된 경로만 쓰고 페이지 내용은 넣지 않는다. */
+  const ICON_PATHS = {
+    link: [
+      'M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71',
+      'M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71',
+    ],
+    code: ['M8 7l-5 5 5 5', 'M16 7l5 5-5 5'],
+    copy: [
+      'M9 9h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2z',
+      'M5 15H4a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h9a1 1 0 0 1 1 1v1',
+    ],
+    check: ['M5 12.5l4.5 4.5L19 7.5'],
+    revert: ['M3 12a9 9 0 1 0 3-6.7', 'M3 3v6h6'],
+  };
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+
+  function icon(name) {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('class', `${CLS}-ico`);
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('aria-hidden', 'true');
+    for (const d of ICON_PATHS[name]) {
+      const path = document.createElementNS(SVG_NS, 'path');
+      path.setAttribute('d', d);
+      svg.append(path);
+    }
+    return svg;
+  }
+
+  function el(tag, className, text) {
+    const node = document.createElement(tag);
+    node.className = className;
+    if (text !== undefined) node.textContent = text;
+    return node;
+  }
+
+  function button(className, iconName) {
+    const btn = el('button', `${CLS}-btn ${className}`);
+    btn.type = 'button';
+    btn.append(icon(iconName));
+    return btn;
+  }
+
+  function hostOf(url) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return '';
+    }
+  }
+
+  /**
+   * 주소로 풀린 결과: 한 줄을 따로 차지하는 카드.
+   * [링크 표시] 주소·도메인 [복사][원문/결과 전환]
+   */
+  function makeLinkCard(span, m) {
+    const url = m.text.trim();
+    span.classList.add(`${CLS}-card`);
+    span.dataset.b64dHost = hostOf(url);
+
+    const badge = el('span', `${CLS}-badge`);
+    badge.append(icon('link'));
+
+    const body = el('span', `${CLS}-body`);
+    const a = el('a', `${CLS}-url`, url);
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener noreferrer';
+    a.title = url;
+    const raw = el('span', `${CLS}-raw`, m.original);
+    raw.hidden = true;
+    raw.title = m.original;
+    body.append(a, raw, el('span', `${CLS}-sub`));
+
+    span.append(badge, body, button(`${CLS}-copy`, 'copy'), button(`${CLS}-toggle`, 'revert'));
+    renderCard(span);
+    return span;
+  }
+
+  /** 카드의 원문/결과 표시에 맞춰 아이콘·보조 문구·버튼 이름을 맞춘다. */
+  function renderCard(span) {
+    const original = span.dataset.b64dShowing === 'original';
+    span.querySelector(`.${CLS}-url`).hidden = original;
+    span.querySelector(`.${CLS}-raw`).hidden = !original;
+    span.querySelector(`.${CLS}-badge`).replaceChildren(icon(original ? 'code' : 'link'));
+
+    const depth = Number(span.dataset.b64dDepth);
+    let sub = original ? 'Base64 원문' : span.dataset.b64dHost;
+    if (original && depth > 1) sub += ` · ${depth}단계 디코딩`;
+    span.querySelector(`.${CLS}-sub`).textContent = sub;
+
+    const labels = [
+      [`.${CLS}-copy`, original ? '원문 복사' : '주소 복사'],
+      [`.${CLS}-toggle`, original ? '결과 보기' : '원문 보기'],
+    ];
+    for (const [sel, label] of labels) {
+      const btn = span.querySelector(sel);
+      btn.title = label;
+      btn.setAttribute('aria-label', label);
+    }
+  }
+
   /**
    * 디코딩 결과 요소를 만든다.
-   * - 링크 결과(본문, linkify): <a> + 숨긴 원문 + ↺ 버튼
+   * - 주소 결과(본문, linkify): 카드
    * - 텍스트 결과: 클릭으로 원문/결과 전환. 링크 안에 있으면 클릭 전환 없이 툴팁만.
    */
   function makeDecoded(m, { linkify, inLink }) {
@@ -57,34 +159,11 @@
     span.dataset.b64dDecoded = m.text;
     span.dataset.b64dDepth = String(m.depth);
     span.dataset.b64dShowing = 'decoded';
+
+    if (linkify && !inLink && base64.isHttpUrl(m.text)) return makeLinkCard(span, m);
+
+    span.classList.add(`${CLS}-text`);
     if (/[\r\n]/.test(m.text)) span.classList.add(`${CLS}-multiline`);
-
-    if (linkify && !inLink && base64.isHttpUrl(m.text)) {
-      span.classList.add(`${CLS}-link`);
-      span.title = tooltip(m, false);
-
-      const a = document.createElement('a');
-      a.className = `${CLS}-url`;
-      a.href = m.text.trim();
-      a.target = '_blank';
-      a.rel = 'noopener noreferrer';
-      a.textContent = m.text.trim();
-
-      const raw = document.createElement('span');
-      raw.className = `${CLS}-raw`;
-      raw.hidden = true;
-      raw.textContent = m.original;
-
-      const btn = document.createElement('button');
-      btn.type = 'button';
-      btn.className = `${CLS}-toggle`;
-      btn.title = '원문 보기';
-      btn.setAttribute('aria-label', '원문 보기');
-      btn.textContent = '↺';
-
-      span.append(a, raw, btn);
-      return span;
-    }
 
     const clickable = !inLink;
     if (clickable) span.dataset.b64dClickable = '';
@@ -166,30 +245,76 @@
 
   function setShowing(span, showing) {
     span.dataset.b64dShowing = showing;
-    if (span.classList.contains(`${CLS}-link`)) {
-      span.querySelector(`.${CLS}-url`).hidden = showing === 'original';
-      span.querySelector(`.${CLS}-raw`).hidden = showing !== 'original';
-      const label = showing === 'original' ? '결과 보기' : '원문 보기';
-      const btn = span.querySelector(`.${CLS}-toggle`);
-      btn.title = label;
-      btn.setAttribute('aria-label', label);
-    } else {
-      span.textContent = showing === 'original' ? span.dataset.b64dOriginal : span.dataset.b64dDecoded;
+    span.textContent = showing === 'original' ? span.dataset.b64dOriginal : span.dataset.b64dDecoded;
+  }
+
+  const FADE_MS = 180;
+
+  /** 카드의 전환 버튼: 아이콘을 한 바퀴 돌리고, 내용을 잠깐 흐리게 했다가 바꾼다. */
+  function toggleCard(btn) {
+    const span = btn.closest(`.${CLS}-card`);
+    btn.classList.remove('is-spinning');
+    void btn.offsetWidth; // 연속으로 눌러도 매번 다시 돌게
+    btn.classList.add('is-spinning');
+    const body = span.querySelector(`.${CLS}-body`);
+    body.classList.add('is-fading');
+    setTimeout(() => {
+      span.dataset.b64dShowing = span.dataset.b64dShowing === 'original' ? 'decoded' : 'original';
+      renderCard(span);
+      body.classList.remove('is-fading');
+    }, FADE_MS);
+  }
+
+  async function writeClipboard(text) {
+    try {
+      await navigator.clipboard.writeText(text);
+      return true;
+    } catch {
+      // 클립보드 API를 못 쓰는 환경이면 예전 방식으로 복사한다
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;pointer-events:none';
+      document.body.append(ta);
+      ta.select();
+      let ok = false;
+      try {
+        ok = document.execCommand('copy');
+      } catch {
+        ok = false;
+      }
+      ta.remove();
+      return ok;
     }
   }
 
-  /** 문서 전체에 한 번만 다는 클릭 처리(원문/결과 전환). */
+  /** 카드의 복사 버튼: 지금 보이는 쪽(주소 또는 원문)을 복사하고 잠깐 체크 표시를 띄운다. */
+  async function copyCard(btn) {
+    const span = btn.closest(`.${CLS}-card`);
+    const original = span.dataset.b64dShowing === 'original';
+    const text = original ? span.dataset.b64dOriginal : span.dataset.b64dDecoded.trim();
+    if (!(await writeClipboard(text))) return;
+    btn.replaceChildren(icon('check'));
+    btn.classList.add('is-done');
+    clearTimeout(btn._b64dTimer);
+    btn._b64dTimer = setTimeout(() => {
+      btn.replaceChildren(icon('copy'));
+      btn.classList.remove('is-done');
+    }, 1200);
+  }
+
+  /** 문서 전체에 한 번만 다는 클릭 처리(원문/결과 전환, 복사). */
   function installClickHandler(doc = document) {
     doc.addEventListener('click', (e) => {
       const target = e.target instanceof Element ? e.target : null;
       if (!target) return;
 
-      const btn = target.closest(`.${CLS}-toggle`);
+      const btn = target.closest(`.${CLS}-card .${CLS}-btn`);
       if (btn) {
         e.preventDefault();
         e.stopPropagation();
-        const span = btn.closest(`.${CLS}`);
-        setShowing(span, span.dataset.b64dShowing === 'original' ? 'decoded' : 'original');
+        if (btn.classList.contains(`${CLS}-toggle`)) toggleCard(btn);
+        else copyCard(btn);
         return;
       }
 
