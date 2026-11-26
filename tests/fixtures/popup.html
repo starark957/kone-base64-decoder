@@ -48,7 +48,8 @@
         storage: storageChrome.storage,
         runtime: storageChrome.runtime,
         tabs: {
-          query: async () => [{ id: 1, url: mode === 'none' ? 'https://example.com/' : 'https://kone.gg/s/somisoft/test' }],
+          // 실제 확장처럼 tabs 권한이 없어 탭 주소(url)는 주지 않는다.
+          query: async () => [{ id: 1 }],
           sendMessage: async (id, message) => {
             if (!w.__stub) throw new Error('Could not establish connection. Receiving end does not exist.');
             return w.__stub.sendMessage(message);
