@@ -6,6 +6,7 @@
 
   const CLS = 'b64d';
   const SKIP_INSIDE = `.${CLS}`;
+  const CODE_INSIDE = 'code, pre, kbd, samp';
 
   /**
    * 치환한 원래 텍스트 노드(앞부분으로 남김) → { prefix, parts }.
@@ -184,7 +185,11 @@
    * @returns {number} 치환한 개수
    */
   function decorateTextNode(node, opts, display) {
-    const matches = base64.findMatches(node.data, opts);
+    let matches = base64.findMatches(node.data, opts);
+    // 코드 블록 안의 `abc=` 같은 짧은 덩어리는 코드일 가능성이 높아 그대로 둔다(긴 것은 푼다).
+    if (matches.length > 0 && node.parentElement.closest(CODE_INSIDE)) {
+      matches = matches.filter((m) => !base64.isShort(m.original));
+    }
     if (matches.length === 0) {
       checked.set(node, node.data);
       return 0;
