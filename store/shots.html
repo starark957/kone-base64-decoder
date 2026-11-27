@@ -1,0 +1,149 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>스토어 이미지</title>
+  <!-- Chrome 웹 스토어 스크린샷·홍보 이미지용 장면. scripts/store-shots.js가 ?scene=… 으로 열어 찍는다.
+       실제 확장 스크립트·CSS를 그대로 써서 보이는 모습이 설치본과 같다. -->
+  <link rel="stylesheet" href="../src/content/content.css">
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; }
+    body {
+      width: 1280px; height: 800px; overflow: hidden;
+      font: 15px/1.6 'Malgun Gothic', system-ui, sans-serif;
+      background: linear-gradient(160deg, #eaf1ff 0%, #f7f9fc 55%, #eef2f7 100%);
+      color: #1f2328;
+    }
+    .caption { height: 168px; padding: 44px 80px 0; }
+    .caption h2 { margin: 0; font-size: 36px; font-weight: 700; letter-spacing: -0.5px; }
+    .caption p { margin: 10px 0 0; font-size: 19px; color: #4b5563; }
+
+    .window {
+      position: relative; margin: 0 80px; height: 596px;
+      border-radius: 14px 14px 0 0; overflow: hidden;
+      background: #fff; box-shadow: 0 20px 50px rgba(30, 50, 90, 0.18), 0 0 0 1px rgba(30, 50, 90, 0.08);
+    }
+    .bar { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 16px; background: #eef1f5; border-bottom: 1px solid #dde2e8; }
+    .bar i { width: 12px; height: 12px; border-radius: 50%; background: #d4d9e0; }
+    .bar .addr { margin-left: 16px; flex: 1; max-width: 520px; height: 24px; border-radius: 12px; background: #fff; font: 12.5px/24px system-ui, sans-serif; color: #6b7280; padding: 0 14px; }
+    .page { padding: 28px 56px; }
+
+    /* 게시물 */
+    #post-article header h1 { margin: 0 0 6px; font-size: 24px; line-height: 1.4; }
+    .meta { color: #6b7280; font-size: 13px; padding-bottom: 14px; border-bottom: 1px solid #e5e7eb; margin-bottom: 18px; }
+    .article-prose p { margin: 0 0 14px; font-size: 16px; }
+    .article-prose table { border-collapse: collapse; margin-top: 4px; }
+    .article-prose td { border: 1px solid #e5e7eb; padding: 8px 14px; font-size: 15px; }
+    .article-prose td:first-child { background: #f6f8fa; font-weight: 600; }
+
+    /* 목록 (게시판 행 구조를 본뜸) */
+    .board { font-size: 13px; color: #6b7280; margin-bottom: 8px; }
+    .head, a.row > div > div[title] { display: grid; grid-template-columns: 76px minmax(0, 1fr) 120px 70px; gap: 16px; align-items: center; }
+    .head { padding: 8px 4px; font-size: 13px; color: #6b7280; border-bottom: 2px solid #e5e7eb; }
+    a.row { display: block; padding: 11px 4px; border-bottom: 1px solid #eef0f3; color: inherit; text-decoration: none; font-size: 15px; }
+    .cat { text-align: center; font-size: 12.5px; color: #4b5563; background: #f1f3f6; border-radius: 6px; padding: 2px 0; }
+    .flex { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    .text-ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    .who, .when { color: #6b7280; font-size: 13.5px; }
+    .md\:hidden { display: none; }
+
+    /* 다크 장면 */
+    html.dark body { background: linear-gradient(160deg, #1b2233 0%, #12151b 60%, #0e1014 100%); color: #e6edf3; }
+    html.dark .caption p { color: #a3acb9; }
+    html.dark .window { background: #0b0b0c; color: #e4e4e7; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.08); }
+    html.dark .bar { background: #1c1f24; border-color: #2a2e35; }
+    html.dark .bar i { background: #3a3f47; }
+    html.dark .bar .addr { background: #2a2e35; color: #9aa3ae; }
+    html.dark .meta { border-color: #27272a; color: #9198a1; }
+    html.dark .article-prose td { border-color: #27272a; }
+    html.dark .article-prose td:first-child { background: #18181b; }
+
+    /* 팝업(확장 아이콘을 눌렀을 때) */
+    .popup {
+      position: absolute; top: 48px; right: 18px; width: 362px; height: 176px; border: 0;
+      border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    }
+
+    /* 홍보 타일 440×280 */
+    body.tile { width: 440px; height: 280px; display: flex; flex-direction: column; justify-content: center; padding: 0 34px; }
+    .tile .brand { display: flex; align-items: center; gap: 16px; }
+    .tile .brand img { width: 72px; height: 72px; }
+    .tile h1 { margin: 0; font-size: 27px; line-height: 1.25; letter-spacing: -0.5px; }
+    .tile .sub { margin: 18px 0 0; font-size: 15px; color: #4b5563; }
+    .tile .demo { margin-top: 14px; font-size: 15px; display: flex; align-items: center; gap: 10px; color: #6b7280; }
+    .tile .demo code { font: 13px/1 Consolas, monospace; color: #6b7280; }
+  </style>
+</head>
+<body>
+  <script src="chrome-stub.js"></script>
+  <script>
+    const enc = (s) => btoa(String.fromCharCode(...new TextEncoder().encode(s)));
+    const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+    const scene = new URLSearchParams(location.search).get('scene') || 'post';
+
+    const caption = (h, p) => `<div class="caption"><h2>${h}</h2><p>${p}</p></div>`;
+    const windowOpen = (addr) => `<div class="window"><div class="bar"><i></i><i></i><i></i><div class="addr">${addr}</div></div><div class="page">`;
+
+    function post({ title, body }) {
+      return `<div id="post-article"><header><h1>${esc(title)}</h1></header>
+        <div class="meta">번역 · 익명의 번역가 · 조회 1,024</div>
+        <div class="article-prose">${body}</div></div>`;
+    }
+
+    function row(cat, title, who, when) {
+      return `<a class="row" href="/s/example/${Math.random().toString(36).slice(2)}"><div class="hidden md:block">
+        <div title="${esc(title)}"><div class="min-w-0"><div class="cat">${cat}</div></div>
+          <div class="min-w-0"><div class="flex"><span></span><span class="text-ellipsis">${esc(title)}</span></div></div>
+          <div class="who">${who}</div><div class="when">${when}</div></div></div></a>`;
+    }
+
+    const scenes = {
+      post: () => caption('Base64 문장을 바로 읽을 수 있게', '게시물을 열면 제목과 본문의 Base64를 자동으로 풀어 보여 줍니다. 주소는 바로 열 수 있는 카드로 바뀝니다.')
+        + windowOpen('kone.gg/s/example/…')
+        + post({
+          title: `[번역] ${enc('여름밤 단편 모음')} 1화`,
+          body: `<p>원본 링크: ${enc('https://example.com/stories/summer-night')}</p>
+            <p>작가 후기: ${enc('끝까지 읽어 주셔서 감사합니다! 다음 화도 금방 올릴게요.')}</p>
+            <table><tr><td>판매처</td><td>${enc('C')}</td></tr><tr><td>분량</td><td>약 2만 자</td></tr></table>`,
+        }) + '</div></div>',
+
+      list: () => caption('글 목록 제목도 함께', '게시판, 검색 결과, 홈 화면, 프로필의 글 목록 제목까지 미리 풀어 두어 어떤 글인지 바로 알 수 있습니다.')
+        + windowOpen('kone.gg/s/example')
+        + '<div class="board">s/example · 전체글</div><div class="head"><div style="text-align:center">분류</div><div>제목</div><div>작성자</div><div>날짜</div></div>'
+        + [
+          row('번역', `[번역] ${enc('여름밤 단편 모음')} 1화`, '번역가A', '11.27'),
+          row('번역', `${enc('비 오는 날의 편지')} 완결`, '번역가B', '11.27'),
+          row('자료', `판매처 ${enc('C')} 정리`, '정리왕', '11.26'),
+          row('잡담', '오늘 올라온 신작 목록 공유합니다', '지나가던', '11.26'),
+          row('번역', `${enc('작은 서점 이야기')} 3화`, '번역가A', '11.25'),
+          row('질문', `${enc('이 작품 원제 아시는 분?')}`, '궁금이', '11.25'),
+          row('잡담', '주말 동안 읽을 작품 추천 받아요', '책벌레', '11.24'),
+          row('번역', `[번역] ${enc('겨울 정원')} 외전`, '번역가C', '11.24'),
+        ].join('') + '</div></div>',
+
+      dark: () => caption('원문은 언제든 다시 확인', '카드의 버튼이나 파란 표시를 누르면 원문을 볼 수 있고, 팝업에서 한 번에 켜고 끌 수 있습니다. 다크 모드도 지원합니다.')
+        + windowOpen('kone.gg/s/example/…')
+        + post({
+          title: `[번역] ${enc('비 오는 날의 편지')} 완결`,
+          body: `<p>원본 링크: ${enc('https://example.com/stories/rainy-letter')}</p>
+            <p>다운로드: ${enc('https://example.com/files/rainy-letter.zip')}</p>
+            <p>역자 한마디: ${enc('오래 기다리셨습니다. 마지막 화입니다.')}</p>`,
+        }) + '</div><iframe class="popup" src="../src/popup/popup.html"></iframe></div>',
+
+      tile: () => `<div class="brand"><img src="../icons/icon-128.png" alt=""><h1>코네<br>Base64 디코더</h1></div>
+        <p class="sub">게시물과 목록의 Base64 문장을 자동으로 풀어 줍니다</p>`,
+    };
+
+    if (scene === 'dark') document.documentElement.classList.add('dark');
+    if (scene === 'tile') document.body.classList.add('tile');
+    document.body.insertAdjacentHTML('afterbegin', scenes[scene]());
+  </script>
+  <script src="../src/lib/browser-api.js"></script>
+  <script src="../src/lib/base64.js"></script>
+  <script src="../src/lib/settings.js"></script>
+  <script src="../src/content/selectors.js"></script>
+  <script src="../src/content/replacer.js"></script>
+  <script src="../src/content/content.js"></script>
+</body>
+</html>
