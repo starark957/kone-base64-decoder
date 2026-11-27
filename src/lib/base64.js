@@ -12,7 +12,7 @@
   /** 영역별 기준 */
   const AREA = Object.freeze({
     body: Object.freeze({ minLength: 16, shortNeedsPadding: false }),
-    title: Object.freeze({ minLength: 4, shortNeedsPadding: true }),
+    title: Object.freeze({ minLength: 4, shortNeedsPadding: true, singleLine: true }),
   });
 
   const MAX_DEPTH = 10;
@@ -80,7 +80,16 @@
   }
 
   /**
-   * 텍스트 안의 Base64 구간을 모두 찾아 디코딩한다.
+   * 화면에 넣을 모양으로 다듬는다. `echo 이름 | base64`처럼 만든 글은 끝에 줄바꿈이 붙어 있어
+   * 앞뒤 공백·줄바꿈을 걷어 낸다. 한 줄 영역(제목)은 안쪽 줄바꿈도 띄어쓰기로 바꾼다.
+   */
+  function tidy(text, opts = AREA.body) {
+    const t = text.trim();
+    return opts.singleLine ? t.replace(/\s*[\r\n]+\s*/g, ' ') : t;
+  }
+
+  /**
+   * 텍스트 안의 Base64 구간을 모두 찾아 디코딩한다. 결과 글자는 tidy로 다듬은 것이다.
    * @returns {Array<{ start: number, end: number, original: string, text: string, depth: number }>}
    */
   function findMatches(text, opts = AREA.body) {
@@ -92,7 +101,7 @@
       const original = m[0];
       const decoded = decodeDeep(original, opts);
       if (decoded) {
-        out.push({ start: m.index, end: m.index + original.length, original, ...decoded });
+        out.push({ start: m.index, end: m.index + original.length, original, text: tidy(decoded.text, opts), depth: decoded.depth });
       }
     }
     return out;
@@ -110,7 +119,7 @@
     }
   }
 
-  const base64 = { CANDIDATE, AREA, MAX_DEPTH, isCandidate, tryDecode, decodeDeep, findMatches, isHttpUrl };
+  const base64 = { CANDIDATE, AREA, MAX_DEPTH, isCandidate, tryDecode, decodeDeep, tidy, findMatches, isHttpUrl };
 
   if (typeof module === 'object' && module.exports) module.exports = base64;
   else root.B64D = Object.assign(root.B64D || {}, { base64 });

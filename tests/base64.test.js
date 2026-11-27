@@ -62,6 +62,16 @@ test.describe('바꿔야 하는 문자열', () => {
     assert.deepEqual(ms.map((m) => m.text), ['첫 번째 문장입니다', '두 번째 문장입니다']);
   });
 
+  test('끝에 줄바꿈이 붙은 결과(echo | base64)는 걷어 낸다', () => {
+    assert.equal(only('[번역] T3NhbmFpCg==', AREA.title).text, 'Osanai');
+    assert.equal(only(enc('  본문 속 문장입니다\n\n')).text, '본문 속 문장입니다');
+  });
+
+  test('제목은 안쪽 줄바꿈도 한 줄로, 본문은 줄바꿈 유지', () => {
+    assert.equal(only(enc('첫 줄\r\n  둘째 줄'), AREA.title).text, '첫 줄 둘째 줄');
+    assert.equal(only(enc('첫 줄입니다\n둘째 줄입니다')).text, '첫 줄입니다\n둘째 줄입니다');
+  });
+
   test('제목 속 Qw== → C', () => {
     assert.equal(only('[번역] Qw==', AREA.title).text, 'C');
   });
