@@ -28,6 +28,20 @@
   </div>
   <div id="list"></div>
 
+  <!-- 홈 화면의 서브별 미리보기 목록 (2026-11-27 확인 기준) -->
+  <section id="home">
+    <a class="row min-w-0 grow" href="/s/somisoft/h1"><span class="line-clamp-1 flex-1 text-sm">[번역] QW1lTm90ZQ== 모음 <span class="text-xs text-muted-foreground">[2]</span></span></a>
+    <a class="row min-w-0 grow" href="/s/somisoft/h2"><span class="line-clamp-1 flex-1 text-sm">평범한 홈 제목 Test=</span></a>
+  </section>
+
+  <!-- 프로필: 게시글 탭(두 줄 굵은 제목)과 댓글 탭(댓글 내용·글 제목은 그대로) -->
+  <section id="profile-posts">
+    <a class="row min-w-0 grow" href="/s/somisoft/u1"><div class="flex flex-col gap-1"><span class="text-xs">s/somisoft</span><div class="flex items-center gap-1.5"><span class="line-clamp-2 font-semibold">작가 TU9NTw== 신작</span></div></div></a>
+  </section>
+  <section id="profile-comments">
+    <a class="row min-w-0 grow" href="/s/somisoft/c1"><span class="text-xs">s/somisoft</span><p>댓글 Qw== 그대로</p><span class="font-medium">원글 Qw== 그대로</span></a>
+  </section>
+
   <script>
     // 코네 목록 행 구조를 본뜬 템플릿 (2026-11-26 확인 기준)
     function row(id, title, author) {
