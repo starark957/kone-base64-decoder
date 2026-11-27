@@ -45,6 +45,8 @@
 · kone.gg 페이지에서만 동작합니다.
 · 저장하는 정보는 켜기·끄기 설정 하나뿐입니다.
 
+소스 코드: https://github.com/starark957/kone-base64-decoder
+
 이 확장 프로그램은 코네(kone.gg)와 관계없는 비공식 도구입니다.
 ```
 
@@ -64,7 +66,11 @@
 
 스크린샷의 게시물·목록은 예시 내용으로 만든 화면이고, 실제 코네 게시물은 쓰지 않았습니다.
 
-**공식 URL / 홈페이지 URL / 지원 URL**: 비워 둡니다(저장소가 비공개).
+**공식 URL**: 비워 둡니다(Search Console로 소유 확인한 사이트만 고를 수 있음).
+
+**홈페이지 URL**: https://github.com/starark957/kone-base64-decoder
+
+**지원 URL**: https://github.com/starark957/kone-base64-decoder/issues
 
 ## 3. 개인정보 보호 관행 (Privacy practices)
 
@@ -93,7 +99,7 @@ kone.gg 페이지에 적힌 Base64 인코딩 문장을 찾아, 읽을 수 있는
 - 항목의 단일 목적과 관련 없는 목적으로 사용자 데이터를 사용하거나 전송하지 않습니다.
 - 신용도 판단이나 대출 목적으로 사용자 데이터를 사용하거나 전송하지 않습니다.
 
-**개인정보처리방침 URL**: 수집하는 사용자 데이터가 없으므로 필수가 아닙니다. 비워 둡니다.
+**개인정보처리방침 URL**: https://github.com/starark957/kone-base64-decoder/blob/main/PRIVACY.md (수집하는 데이터가 없어 필수는 아니지만 넣어 두면 신뢰에 도움이 됩니다)
 
 ## 4. 배포 (Distribution)
 
