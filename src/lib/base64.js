@@ -9,28 +9,39 @@
    */
   const CANDIDATE = /(?<![A-Za-z0-9+/=_-])[A-Za-z0-9+/_-]{2,}={0,2}(?![A-Za-z0-9+/=_-])/g;
 
-  /** 영역별 기준 */
+  /**
+   * 영역별 기준. 본문·제목 모두 4자부터 보되, 16자 미만의 짧은 덩어리는
+   * 패딩(=)·정규형·의미 있는 결과를 모두 만족할 때만 바꾼다(isCandidate, tryDecode).
+   * 제목은 결과를 한 줄로 만든다(tidy).
+   */
   const AREA = Object.freeze({
-    body: Object.freeze({ minLength: 16, shortNeedsPadding: false }),
+    body: Object.freeze({ minLength: 4, shortNeedsPadding: true }),
     title: Object.freeze({ minLength: 4, shortNeedsPadding: true, singleLine: true }),
   });
 
   const MAX_DEPTH = 10;
   /** 이보다 긴 덩어리는 이미지 등 바이너리일 가능성이 높아 시도하지 않는다. */
   const MAX_TOKEN_LENGTH = 100000;
-  /** 패딩이 없어도 되는 길이 (제목 영역) */
+  /** 이 길이 미만은 "짧은 덩어리": 패딩이 꼭 있어야 하고, 추가 검사를 받는다. */
   const PADDING_FREE_LENGTH = 16;
 
   const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
+  /** 글자나 숫자가 하나라도 있는지 (`!`처럼 기호만 나오는 짧은 결과를 거른다) */
+  const MEANINGFUL = /[\p{L}\p{N}]/u;
   const WHOLE_TOKEN = /^[A-Za-z0-9+/_-]+={0,2}$/;
 
   const utf8 = new TextDecoder('utf-8', { fatal: true });
+
+  /** 짧은 덩어리인지 (패딩 포함 길이 기준) */
+  function isShort(token) {
+    return token.length < PADDING_FREE_LENGTH;
+  }
 
   /** 디코딩 전 1차 필터: 길이, 패딩, 문자 종류. */
   function isCandidate(token, opts = AREA.body) {
     const { minLength, shortNeedsPadding = false } = opts;
     if (token.length < minLength || token.length > MAX_TOKEN_LENGTH) return false;
-    if (shortNeedsPadding && token.length < PADDING_FREE_LENGTH && !token.endsWith('=')) return false;
+    if (shortNeedsPadding && isShort(token) && !token.endsWith('=')) return false;
 
     const body = token.replace(/=+$/, '');
     if (body.length % 4 === 1) return false; // 유효한 Base64가 될 수 없는 길이
@@ -41,14 +52,22 @@
     return kinds >= 2; // 긴 영단어 제외
   }
 
-  /** 한 단계 디코딩. 정상적인 UTF-8 텍스트가 아니면 null. */
+  /**
+   * 한 단계 디코딩. 정상적인 UTF-8 텍스트가 아니면 null.
+   * 짧은 덩어리는 더 엄격하게 본다:
+   * - 정규형: 풀린 바이트를 다시 Base64로 만들었을 때 똑같아야 한다. 실제 인코더는 `!`를 항상
+   *   `IQ==`로 만들므로, 우연히 Base64 모양이 된 `Ia==` 같은 글자는 여기서 걸러진다.
+   * - 의미 있는 결과: 글자나 숫자가 하나는 있어야 한다.
+   */
   function tryDecode(token) {
     let s = token.replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, '');
     if (s.length % 4 === 1) return null;
     s += '='.repeat((4 - (s.length % 4)) % 4);
+    const short = isShort(token);
     let text;
     try {
       const binary = atob(s);
+      if (short && btoa(binary) !== s) return null;
       const bytes = new Uint8Array(binary.length);
       for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
       text = utf8.decode(bytes);
@@ -56,6 +75,7 @@
       return null;
     }
     if (text.trim() === '' || CONTROL_CHARS.test(text)) return null;
+    if (short && !MEANINGFUL.test(text)) return null;
     return text;
   }
 
@@ -119,7 +139,7 @@
     }
   }
 
-  const base64 = { CANDIDATE, AREA, MAX_DEPTH, isCandidate, tryDecode, decodeDeep, tidy, findMatches, isHttpUrl };
+  const base64 = { CANDIDATE, AREA, MAX_DEPTH, isShort, isCandidate, tryDecode, decodeDeep, tidy, findMatches, isHttpUrl };
 
   if (typeof module === 'object' && module.exports) module.exports = base64;
   else root.B64D = Object.assign(root.B64D || {}, { base64 });

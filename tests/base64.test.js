@@ -76,6 +76,13 @@ test.describe('바꿔야 하는 문자열', () => {
     assert.equal(only('[번역] Qw==', AREA.title).text, 'C');
   });
 
+  test('본문에서도 짧은 Base64 (제목과 같은 기준)', () => {
+    assert.equal(only('판매처: Qw==').text, 'C');
+    assert.equal(only('| Mg== |').text, '2');
+    assert.equal(enc('한!'), '7ZWcIQ==');
+    assert.equal(only('메모 7ZWcIQ==').text, '한!');
+  });
+
   test('제목 속 16자 이상은 패딩 없이도', () => {
     const token = enc('제목 속 긴 문장').replace(/=+$/, '');
     assert.ok(token.length >= 16);
@@ -94,8 +101,19 @@ test.describe('그대로 둬야 하는 문자열', () => {
 
   test('긴 영단어', () => none('internationalization'));
   test('SHA-256 Hex 해시', () => none('9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'));
-  test('본문 속 15자 이하 Base64 (최소 길이 미달)', () => none('SGVsbG8gS29u'));
-  test('본문 기준에서는 Qw==도 그대로', () => none('Qw=='));
+  test('본문 속 16자 미만 Base64인데 패딩 없음', () => {
+    none('SGVsbG8gS29u 입니다');
+    none(enc('한글')); // 7ZWc6riA: 진짜 Base64지만 짧고 패딩이 없어 일반 글과 구별이 안 된다
+  });
+  test('짧은 덩어리: 정규형이 아님 (Ia==도 !로 풀리지만 실제 인코더는 IQ==를 만든다)', () => {
+    none('Ia==');
+    none('Ia==', AREA.title);
+    none('CSa= 표');
+  });
+  test('짧은 덩어리: 기호만 나오는 결과 (IQ== → !)', () => none('IQ== 그리고 Ig=='));
+  test('본문에 흔한 = 표현', () => {
+    for (const s of ['HP=100', 'x2=y+1', 'page=2&sort=new', 'E=mc2', 'Lv3= 달성', 'Test=', 'OK==', 'ATK+=5']) none(s);
+  });
   test('제목 속 RJ071591 (16자 미만, 패딩 없음)', () => none('RJ071591 작품 번역', AREA.title));
   test('제목 속 짧은 일반 단어', () => none('Test 2024 Re0', AREA.title));
   test('이미지 등 바이너리 Base64', () =>
