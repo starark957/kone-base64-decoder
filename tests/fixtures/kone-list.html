@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>fixture: 코네 게시판 목록</title>
+  <link rel="stylesheet" href="../../src/content/content.css">
+  <style>
+    body { font: 14px/1.6 system-ui, 'Malgun Gothic', sans-serif; max-width: 900px; margin: 24px auto; padding: 0 16px; }
+    .controls { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    /* 코네(Tailwind)의 반응형 레이아웃 흉내: 768px 이상이면 데스크톱 행, 아니면 모바일 행 */
+    .hidden { display: none; }
+    @media (min-width: 768px) { .md\:block { display: block; } .md\:hidden { display: none; } }
+    a.row { display: block; padding: 6px 0; border-bottom: 1px solid color-mix(in srgb, currentColor 15%, transparent); color: inherit; text-decoration: none; }
+    .md\:grid { display: grid; grid-template-columns: 4rem minmax(0, 1fr) 6rem; gap: 12px; align-items: center; }
+    .flex { display: flex; align-items: center; gap: 4px; min-width: 0; }
+    .flex-col { flex-direction: column; align-items: stretch; }
+    .min-w-0 { min-width: 0; }
+    .text-ellipsis { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+    /* 코네 다크 모드 흉내: <html class="dark"> */
+    html.dark body { background: #0b0b0c; color: #e4e4e7; }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button onclick="document.documentElement.classList.toggle('dark')">다크 모드</button>
+    <button id="next-new">다음 페이지 (행을 새로 만듦)</button>
+    <button id="next-reuse">다음 페이지 (행 재사용: 텍스트만 바꿈)</button>
+  </div>
+  <div id="list"></div>
+
+  <!-- 홈 화면의 서브별 미리보기 목록 (2026-11-27 확인 기준) -->
+  <section id="home">
+    <a class="row min-w-0 grow" href="/s/somisoft/h1"><span class="line-clamp-1 flex-1 text-sm">[번역] QW1lTm90ZQ== 모음 <span class="text-xs text-muted-foreground">[2]</span></span></a>
+    <a class="row min-w-0 grow" href="/s/somisoft/h2"><span class="line-clamp-1 flex-1 text-sm">평범한 홈 제목 Test=</span></a>
+  </section>
+
+  <!-- 프로필: 게시글 탭(두 줄 굵은 제목)과 댓글 탭(댓글 내용·글 제목은 그대로) -->
+  <section id="profile-posts">
+    <a class="row min-w-0 grow" href="/s/somisoft/u1"><div class="flex flex-col gap-1"><span class="text-xs">s/somisoft</span><div class="flex items-center gap-1.5"><span class="line-clamp-2 font-semibold">작가 TU9NTw== 신작</span></div></div></a>
+  </section>
+  <section id="profile-comments">
+    <a class="row min-w-0 grow" href="/s/somisoft/c1"><span class="text-xs">s/somisoft</span><p>댓글 Qw== 그대로</p><span class="font-medium">원글 Qw== 그대로</span></a>
+  </section>
+
+  <script>
+    // 코네 목록 행 구조를 본뜬 템플릿 (2026-11-26 확인 기준)
+    function row(id, title, author) {
+      const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+      return `
+<a class="row group/article" href="/s/somisoft/${id}">
+  <div class="hidden md:block">
+    <div title="${esc(title)}" class="items-center gap-x-3 text-sm md:grid">
+      <div class="min-w-0"><div class="overflow-hidden text-center">번역</div></div>
+      <div class="min-w-0"><div class="flex items-center gap-1"><span></span><span class="overflow-hidden text-nowrap text-ellipsis">${esc(title)}</span></div></div>
+      <div class="flex min-w-0"><div class="flex items-center gap-1"><span class="overflow-hidden text-center align-middle text-nowrap">${esc(author)}</span></div></div>
+    </div>
+  </div>
+  <div class="md:hidden">
+    <div class="flex gap-1.5">
+      <div class="flex min-w-0 flex-1 flex-col">
+        <div class="flex items-center gap-0.5 overflow-hidden"><span></span><span class="overflow-hidden text-nowrap text-ellipsis">${esc(title)}</span></div>
+        <div class="flex justify-between gap-2"><div class="flex items-center gap-1"><span class="shrink-0">번역</span><span class="overflow-hidden text-center align-middle">${esc(author)}</span></div></div>
+      </div>
+    </div>
+  </div>
+</a>`;
+    }
+
+    const page1 = [
+      ['r1', '[번역] Qw==', 'YQ=='],
+      ['r2', 'RJ071591 작품 번역', '작성자2'],
+      ['r3', '두 번 U0dWc2JHOD0=', '작성자3'],
+      ['r4', '긴 제목 66qp66GdIOygnOuqqSDthYzsiqTtirg', '작성자4'],
+      ['r5', '주소 aHR0cHM6Ly9leGFtcGxlLmNvbQ==', '작성자5'],
+      ['r6', '평범한 제목 Test 2024', '작성자6'],
+    ];
+    document.getElementById('list').innerHTML = page1.map((r) => row(...r)).join('');
+
+    // 행 재사용 흉내용: 콘텐츠 스크립트가 손대기 전의 원래 텍스트 노드를 잡아 둔다(프레임워크처럼).
+    const titleNodes = [...document.querySelectorAll('#list a.row')].map((a) => ({
+      holder: a.querySelector('div[title]'),
+      nodes: [...a.querySelectorAll('span.text-ellipsis')].map((s) => s.firstChild),
+    }));
+
+    document.getElementById('next-new').onclick = () => {
+      document.getElementById('list').innerHTML = [
+        ['p2a', '2페이지 Mu2OmOydtOyngCDsoJzrqqk=', '작성자'],
+        ['p2b', '그냥 제목', '작성자'],
+      ].map((r) => row(...r)).join('');
+    };
+    document.getElementById('next-reuse').onclick = () => {
+      const next = ['재사용 7J6s7IKs7Jqp65CcIO2WiQ==', '바뀐 평범한 제목', 'Qw== 다시', '넷째', '다섯째', '여섯째'];
+      titleNodes.forEach((t, i) => {
+        t.holder.title = next[i];
+        for (const n of t.nodes) n.data = next[i];
+      });
+    };
+  </script>
+  <script src="chrome-stub.js"></script>
+  <script src="../../src/lib/browser-api.js"></script>
+  <script src="../../src/lib/base64.js"></script>
+  <script src="../../src/lib/settings.js"></script>
+  <script src="../../src/content/selectors.js"></script>
+  <script src="../../src/content/replacer.js"></script>
+  <script src="../../src/content/content.js"></script>
+</body>
+</html>

@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>코네 Base64 디코더</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="top">
+    <img src="../../icons/icon-48.png" width="32" height="32" alt="">
+    <div>
+      <h1>코네 Base64 디코더</h1>
+      <p class="version" id="version"></p>
+    </div>
+  </header>
+
+  <label class="card main-toggle">
+    <span class="text">
+      <span class="title">자동 디코딩</span>
+      <span class="desc" id="enabled-desc">코네의 Base64 문장을 자동으로 풀어 줍니다</span>
+    </span>
+    <span class="switch">
+      <input type="checkbox" id="enabled">
+      <span class="slider" aria-hidden="true"></span>
+    </span>
+  </label>
+
+  <script src="../lib/browser-api.js"></script>
+  <script src="../lib/settings.js"></script>
+  <script src="popup.js"></script>
+</body>
+</html>

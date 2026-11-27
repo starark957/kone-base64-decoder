@@ -1,0 +1,36 @@
+{
+  "manifest_version": 3,
+  "name": "코네 Base64 디코더",
+  "version": "1.0.0",
+  "description": "코네(kone.gg) 게시물 본문·제목과 글 목록 제목의 Base64 문장을 자동으로 풀어 보여 줍니다. 비공식 확장 프로그램입니다.",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["https://kone.gg/*"],
+      "js": [
+        "src/lib/browser-api.js",
+        "src/lib/base64.js",
+        "src/lib/settings.js",
+        "src/content/selectors.js",
+        "src/content/replacer.js",
+        "src/content/content.js"
+      ],
+      "css": ["src/content/content.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "코네 Base64 디코더",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    },
+    "default_popup": "src/popup/popup.html"
+  }
+}

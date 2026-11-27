@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>fixture: 팝업</title>
+  <style>
+    body { font: 14px/1.5 system-ui, 'Malgun Gothic', sans-serif; margin: 16px; }
+    .wrap { display: flex; gap: 16px; align-items: flex-start; }
+    #popup { flex: none; width: 362px; height: 200px; border: 1px solid #888; border-radius: 8px; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+    #page { flex: 1; min-width: 0; height: 640px; border: 1px solid #ccc; }
+  </style>
+</head>
+<body>
+  <!-- 실제 팝업(src/popup/popup.html)을 띄우고, 옆의 코네 흉내 페이지와 가짜 chrome 저장소를 공유한다.
+       팝업에서 설정을 바꾸면 옆 페이지에 바로 반영되는지 볼 수 있다. -->
+  <div class="wrap">
+    <iframe id="popup" title="팝업"></iframe>
+    <iframe id="page" title="탭 페이지" src="kone-post.html"></iframe>
+  </div>
+
+  <script>
+    const page = document.getElementById('page');
+    const popup = document.getElementById('popup');
+
+    page.addEventListener('load', async () => {
+      const w = page.contentWindow;
+      window.__popupChrome = {
+        storage: w.chrome.storage,
+        runtime: { getManifest: () => ({ version: '0.0.0-fixture' }) },
+      };
+      // 로컬 테스트 서버(python http.server)가 가끔 첫 요청을 끊어서 몇 번 다시 시도한다
+      let html;
+      for (let i = 0; i < 5 && !html; i++) {
+        try {
+          html = await fetch('../../src/popup/popup.html', { cache: 'no-store' }).then((r) => r.text());
+        } catch {
+          await new Promise((r) => setTimeout(r, 300));
+        }
+      }
+      popup.onload = () => {
+        // 팝업 내용 높이에 맞춘다(실제 팝업 창처럼)
+        const fit = () => { popup.style.height = popup.contentDocument.documentElement.scrollHeight + 'px'; };
+        fit();
+        new ResizeObserver(fit).observe(popup.contentDocument.body);
+      };
+      popup.srcdoc = html.replace('<head>', '<head><base href="../../src/popup/"><script>window.chrome = parent.__popupChrome;<\/script>');
+    }, { once: true });
+  </script>
+</body>
+</html>

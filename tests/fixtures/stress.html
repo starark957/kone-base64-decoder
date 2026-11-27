@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <title>fixture: 부하 테스트</title>
+  <link rel="stylesheet" href="../../src/content/content.css">
+  <style>body { font: 14px/1.5 system-ui, 'Malgun Gothic', sans-serif; max-width: 760px; margin: 24px auto; padding: 0 16px; }</style>
+</head>
+<body>
+  <!-- 처리 대상이 아닌 곳에서 계속 바뀌는 요소 (코네의 "n분 전", 조회수 같은 것) -->
+  <p>시계: <span id="ticker">0</span></p>
+  <div id="post-article">
+    <header><div><div><h1>부하 테스트 Qw==</h1></div></div></header>
+    <div class="article-prose" id="body"></div>
+  </div>
+
+  <script>
+    // 3000문단, 15문단마다 Base64 한 개
+    const B64 = '67aA7ZWYIO2FjOyKpO2KuCDrrLjsnqU=';
+    const parts = [];
+    for (let i = 0; i < 3000; i++) {
+      parts.push(`<p>${i}번째 문단입니다. 평범한 문장과 English words, 숫자 12345가 섞여 있습니다.${i % 15 === 0 ? ' ' + B64 : ''}</p>`);
+    }
+    document.getElementById('body').innerHTML = parts.join('');
+    let n = 0;
+    setInterval(() => { document.getElementById('ticker').firstChild.data = String(++n); }, 50);
+  </script>
+  <script src="chrome-stub.js"></script>
+  <script src="../../src/lib/browser-api.js"></script>
+  <script src="../../src/lib/base64.js"></script>
+  <script src="../../src/lib/settings.js"></script>
+  <script src="../../src/content/selectors.js"></script>
+  <script src="../../src/content/replacer.js"></script>
+  <script src="../../src/content/content.js"></script>
+</body>
+</html>
