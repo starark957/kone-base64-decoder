@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "코네 Base64 디코더",
   "version": "0.1.0",
-  "description": "코네(kone.gg) 게시물 본문·제목과 게시판 목록 제목의 Base64 문장을 자동으로 디코딩해 보여줍니다.",
+  "description": "코네(kone.gg) 게시물 본문·제목과 글 목록 제목의 Base64 문장을 자동으로 풀어 보여 줍니다. 비공식 확장 프로그램입니다.",
   "icons": {
     "16": "icons/icon-16.png",
     "32": "icons/icon-32.png",
