@@ -1,36 +1,50 @@
-# kone-base64-decoder
+# 코네 Base64 디코더
 
-코네(kone.gg)의 게시물 본문, 게시물 제목, 글 목록 제목(게시판·검색·홈 미리보기·프로필 게시글)에 들어 있는 Base64 문장을 자동으로 디코딩해 보여주는 Chrome·Edge·삼성 인터넷(PC) 확장 프로그램(Manifest V3)입니다. 댓글은 현재 범위에서 제외했습니다.
+코네(kone.gg)에서 Base64로 적힌 문장을 자동으로 풀어 보여 주는 브라우저 확장 프로그램입니다. 복사해서 디코더 사이트에 붙여 넣을 필요 없이, 페이지를 열기만 하면 읽을 수 있는 글로 바뀝니다.
 
-> 현재 단계: **1.0.0 (Chrome 웹 스토어 등록 준비)** — 게시물 본문·제목과 글 목록 제목을 디코딩하고, 새로고침 없는 화면 전환(글 이동, 페이지 넘김, 뒤로·앞으로가기)도 따라갑니다. 풀린 글자는 파란 칩(왼쪽 강조선, 누르면 원문 말풍선)으로, 풀린 주소는 복사·원문 보기 버튼이 있는 카드로 보여 줍니다(코네 라이트·다크 모두). 툴바 팝업에는 자동 디코딩 켜기·끄기 스위치 하나만 있고, 바꾸면 열린 코네 탭에 바로 적용됩니다.
+![게시물 화면](store/images/screenshot-1-post.jpg)
 
-## 개발 환경
+> 코네(kone.gg)와 관계없는 비공식 도구입니다.
 
-- 브랜치: git flow 방식. `main`은 배포본, `develop`은 개발 통합 브랜치, 기능은 `feature/*`에서 만들어 `develop`에 `--no-ff`로 병합합니다. 배포 때는 `release/*`, 긴급 수정은 `hotfix/*`.
-- 테스트: Node.js 20 이상에서 `npm test` (`node --test`).
-- 화면 확인: 저장소 폴더에서 `python -m http.server 5173` 실행 후 `http://localhost:5173/tests/fixtures/kone-post.html`(게시물)이나 `kone-list.html`(목록), `stress.html`(부하 테스트: 3000문단 + 계속 바뀌는 시계), `popup.html`(실제 팝업을 흉내 페이지에 연결)을 열면, 확장 없이 코네 구조를 본뜬 페이지에서 콘텐츠 스크립트를 돌려 볼 수 있습니다(가짜 chrome API 사용).
-- 설치(개발자 모드): `chrome://extensions` → 개발자 모드 켜기 → "압축해제된 확장 프로그램을 로드합니다" → 이 저장소 폴더 선택. 삼성 인터넷(PC)은 "압축 해제된 추가 기능 불러오기"로 같은 폴더(또는 `npm run pack`으로 만든 zip을 푼 폴더)를 고릅니다.
-- 패키징: `npm run pack` → `dist/kone-base64-decoder-<버전>.zip` (manifest.json, icons/, src/만 포함. 버전은 manifest.json과 package.json을 함께 올립니다).
-- 스토어 자료: 등록 문구와 개인정보 답변은 `store/listing.md`. 스크린샷·홍보 타일은 `node scripts/store-shots.js`로 `store/images/`에 다시 만듭니다(헤드리스 Chrome·Edge 사용, 못 찾으면 `BROWSER` 환경 변수로 경로 지정). 장면은 `store/shots.html`.
-- 아이콘: `scripts/icons.html`을 브라우저로 열어 다시 그릴 수 있습니다(결과는 `icons/`).
-- 팝업 폰트: Pretendard JP(SIL OFL 1.1)에서 팝업에 쓰는 글자만 남긴 가변 폰트 `src/popup/fonts/popup-sans.woff2`(약 55KB). OFL에 따라 수정본 이름은 "Popup Sans"이고 라이선스는 `src/popup/fonts/OFL.txt`. 팝업 문구를 바꾸면 `python scripts/subset-font.py <PretendardJPVariable.woff2>`로 다시 만듭니다(fonttools, brotli 필요). 원본은 항상 Pretendard JP를 쓰고, 한자가 필요하면 여기서 가져옵니다.
+## 기능
 
-## 문서
+- **풀어 주는 곳:** 게시물 제목과 본문, 글 목록 제목(게시판, 검색 결과, 홈 화면 미리보기, 프로필의 게시글 목록). 댓글은 건드리지 않습니다.
+- **주소는 카드로:** 풀린 결과가 `https://` 주소면 바로 열 수 있는 카드로 보여 주고, 복사·원문 보기 버튼을 붙입니다.
+- **문장은 파란 표시로:** 누르면 Base64 원문을 보고 복사할 수 있습니다.
+- **겹친 인코딩:** 두 번 이상 인코딩된 문장도 끝까지 풉니다.
+- **오탐 방지:** 영어 단어, 작품 코드, 해시값, `HP=100` 같은 일반 글과 바이너리(이미지 등)는 그대로 둡니다.
+- **화면 전환 대응:** 글 이동, 페이지 넘김, 뒤로·앞으로 가기처럼 새로고침 없는 전환도 따라갑니다.
+- **라이트·다크 모드:** 코네의 화면 모드에 맞춰 보입니다.
+- **켜기·끄기:** 툴바의 확장 아이콘을 눌러 자동 디코딩을 켜고 끌 수 있고, 열린 코네 탭에 바로 적용됩니다.
 
-- [설계 계획서](docs/design.md) — 목표, 대상 사이트 분석, 아키텍처, 알고리즘, 권한, 개발 단계, 테스트 계획, 결정 사항
+## 설치
 
-## 개발 단계
+- **Chrome 웹 스토어:** 심사 중입니다. 등록되면 여기에 링크를 걸겠습니다.
+- **직접 설치:** [Releases](https://github.com/starark957/kone-base64-decoder/releases)나 `npm run pack`으로 만든 zip을 풀고, `chrome://extensions` → 개발자 모드 켜기 → "압축해제된 확장 프로그램을 로드합니다"에서 그 폴더를 고릅니다. 삼성 인터넷(PC)은 "압축 해제된 추가 기능 불러오기"로 같은 폴더를 고릅니다.
 
-| 단계 | 내용 | 상태 |
-| --- | --- | --- |
-| M1 | 골격: manifest, 팝업 켜기·끄기, 설정 저장 | 완료 |
-| M2 | 디코딩 코어 + 단위 테스트 | 완료 |
-| M3 | 게시물 본문·제목 치환, 원문 전환, URL 링크화 | 완료 |
-| M4 | 게시판 목록 제목 디코딩, 원문 툴팁 | 완료 |
-| M5 | 화면 전환 대응: 게시물 이동, 목록 페이지 넘김 | 완료 |
-| M6 | v1.0 마무리: 아이콘, 팝업, 패키징 | 완료 (삼성 인터넷 31 PC에 설치해 확인, 2026-11-27) |
-| M7 | v1.1: 구조 변경 알림 (옵션 페이지는 만들지 않기로 함: 설정은 켜기·끄기 하나) | 예정 |
-| M8 | Chrome 웹 스토어 게시 | 준비 완료 (등록 자료 `store/`) |
-| M9 | Firefox 지원 | 예정 |
+Chrome, Edge, 삼성 인터넷(PC) 등 Chromium 계열 브라우저에서 동작합니다(Manifest V3).
 
-댓글 디코딩은 필요해지면 추가합니다.
+## 개인정보
+
+어떤 정보도 수집하거나 외부로 보내지 않습니다. 모든 처리는 브라우저 안에서 이루어지고, 저장하는 것은 켜기·끄기 설정 하나뿐입니다. 자세한 내용은 [개인정보처리방침](PRIVACY.md)을 보세요.
+
+## 개발
+
+- **브랜치:** git flow 방식. `main`은 배포본, `develop`은 개발 통합 브랜치, 기능은 `feature/*`에서 만들어 `develop`에 `--no-ff`로 병합합니다. 배포 때는 `release/*`, 긴급 수정은 `hotfix/*`.
+- **테스트:** Node.js 20 이상에서 `npm test` (`node --test`).
+- **화면 확인:** 저장소 폴더에서 `python -m http.server 5173`을 실행하고 `http://localhost:5173/tests/fixtures/` 아래 페이지를 엽니다. 확장 없이 코네 구조를 본뜬 페이지에서 콘텐츠 스크립트를 돌려 볼 수 있습니다(가짜 chrome API 사용).
+  - `kone-post.html`: 게시물
+  - `kone-list.html`: 글 목록
+  - `stress.html`: 부하 테스트(3000문단과 계속 바뀌는 시계)
+  - `popup.html`: 실제 팝업을 흉내 페이지에 연결
+- **패키징:** `npm run pack` → `dist/kone-base64-decoder-<버전>.zip`. manifest.json, icons/, src/만 넣습니다. 버전은 manifest.json과 package.json을 함께 올립니다.
+- **구조:** 코네 화면 구조에 의존하는 선택자는 `src/content/selectors.js` 한 곳에 모았습니다. 감지·디코딩 로직은 `src/lib/base64.js`에 있고 DOM에 의존하지 않습니다.
+- **스토어 자료:** 등록 문구와 개인정보 답변은 `store/listing.md`에 있습니다. 스크린샷과 홍보 타일은 `node scripts/store-shots.js`로 `store/images/`에 다시 만듭니다. 헤드리스 Chrome·Edge를 쓰고, 브라우저를 못 찾으면 `BROWSER` 환경 변수로 경로를 지정합니다.
+- **아이콘:** `scripts/icons.html`을 브라우저로 열어 다시 그릴 수 있습니다(결과는 `icons/`).
+- **팝업 폰트:** Pretendard JP에서 팝업에 쓰는 글자만 남긴 가변 폰트 `src/popup/fonts/popup-sans.woff2`(약 55KB)입니다.
+  - OFL에 따라 수정본 이름은 "Popup Sans"입니다.
+  - 팝업 문구를 바꾸면 `python scripts/subset-font.py <PretendardJPVariable.woff2>`로 다시 만듭니다(fonttools, brotli 필요).
+
+## 라이선스
+
+[MIT](LICENSE). 팝업 폰트(Pretendard JP 기반)는 [SIL Open Font License 1.1](src/popup/fonts/OFL.txt)을 따릅니다.

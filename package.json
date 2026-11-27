@@ -3,6 +3,11 @@
   "version": "1.0.0",
   "private": true,
   "description": "코네(kone.gg) 전용 Base64 자동 디코딩 확장 프로그램",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/starark957/kone-base64-decoder.git"
+  },
   "scripts": {
     "test": "node --test tests/",
     "pack": "node scripts/pack.js"
