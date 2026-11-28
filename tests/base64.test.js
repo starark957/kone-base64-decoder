@@ -83,6 +83,17 @@ test.describe('바꿔야 하는 문자열', () => {
     assert.equal(only('메모 7ZWcIQ==').text, '한!');
   });
 
+  test('패딩 없는 8·12자: 결과가 자연스러운 글이면 푼다', () => {
+    const cases = { '7ZWc6riA': '한글', '67KI7Jet67O4': '번역본', '44OS44Kr44Oq': 'ヒカリ', '5Y+k44GE': '古い', '5p2x5Lqs': '東京',
+      SGVsbG8h: 'Hello!', T3NhbmFp: 'Osanai', Uk9JUk9JTU1E: 'ROIROIMMD', TU9NTzIy: 'MOMO22', SGVsbG8gS29u: 'Hello Kon' };
+    for (const [token, text] of Object.entries(cases)) {
+      assert.equal(enc(text), token);
+      assert.equal(only(`글 ${token} 끝`).text, text, token);
+      assert.equal(only(token, AREA.title).text, text, token);
+    }
+    assert.equal(only('SGVsbG8K').text, 'Hello'); // echo Hello | base64 (끝 줄바꿈)
+  });
+
   test('제목 속 16자 이상은 패딩 없이도', () => {
     const token = enc('제목 속 긴 문장').replace(/=+$/, '');
     assert.ok(token.length >= 16);
@@ -101,9 +112,23 @@ test.describe('그대로 둬야 하는 문자열', () => {
 
   test('긴 영단어', () => none('internationalization'));
   test('SHA-256 Hex 해시', () => none('9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08'));
-  test('본문 속 16자 미만 Base64인데 패딩 없음', () => {
-    none('SGVsbG8gS29u 입니다');
-    none(enc('한글')); // 7ZWc6riA: 진짜 Base64지만 짧고 패딩이 없어 일반 글과 구별이 안 된다
+  test('패딩 없는 짧은 덩어리: 8·12자가 아니면 그대로', () => {
+    none('a29uZQ 입니다'); // kone에서 패딩을 뗀 6자
+    none('SGVsbG8gS29uZQ'); // Hello Kone에서 패딩을 뗀 14자
+  });
+  test('패딩 없는 8·12자: 결과가 깨진 글자 조합이면 그대로', () => {
+    for (const s of [
+      'RJ071591', 'ID806421', 'abc12345', 'Season12', 'userName', 'BJ123456', // 흔한 코드·단어 (UTF-8이 아님)
+      'TnJXSUJu', // NrWIBn: 대소문자가 뒤섞인 낱말
+      'S2F3Z3Ru', // Kawgtn: 자음이 4개 이어짐
+      'OSDtloQx', // "9 햄1": 한글에 숫자가 섞임
+      '7JKs66ml', // 쒬멥: 잘 안 쓰는 음절
+      '5ZeO6Lmo', // 嗎蹨: 잘 안 쓰는 한자
+      'dW1pIHl6', // "umi yz"
+    ]) {
+      none(`글 ${s} 끝`);
+      none(s, AREA.title);
+    }
   });
   test('짧은 덩어리: 정규형이 아님 (Ia==도 !로 풀리지만 실제 인코더는 IQ==를 만든다)', () => {
     none('Ia==');

@@ -10,8 +10,9 @@
   const CANDIDATE = /(?<![A-Za-z0-9+/=_-])[A-Za-z0-9+/_-]{2,}={0,2}(?![A-Za-z0-9+/=_-])/g;
 
   /**
-   * 영역별 기준. 본문·제목 모두 4자부터 보되, 16자 미만의 짧은 덩어리는
-   * 패딩(=)·정규형·의미 있는 결과를 모두 만족할 때만 바꾼다(isCandidate, tryDecode).
+   * 영역별 기준. 본문·제목 모두 4자부터 본다. 16자 미만의 짧은 덩어리는 더 엄격하게 본다(isCandidate, tryDecode):
+   * - 패딩(=)이 있으면: 정규형이고 결과에 글자나 숫자가 있을 때
+   * - 패딩이 없으면: 원래 패딩이 필요 없는 8·12자만, 결과가 자연스러운 글(looksNatural)일 때
    * 제목은 결과를 한 줄로 만든다(tidy).
    */
   const AREA = Object.freeze({
@@ -22,8 +23,10 @@
   const MAX_DEPTH = 10;
   /** 이보다 긴 덩어리는 이미지 등 바이너리일 가능성이 높아 시도하지 않는다. */
   const MAX_TOKEN_LENGTH = 100000;
-  /** 이 길이 미만은 "짧은 덩어리": 패딩이 꼭 있어야 하고, 추가 검사를 받는다. */
+  /** 이 길이 미만은 "짧은 덩어리": 추가 검사를 받는다. */
   const PADDING_FREE_LENGTH = 16;
+  /** 패딩 없이도 받는 짧은 덩어리 길이 (6·9바이트라 원래 패딩이 붙지 않는 길이) */
+  const BARE_SHORT_LENGTHS = [8, 12];
 
   const CONTROL_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/;
   /** 글자나 숫자가 하나라도 있는지 (`!`처럼 기호만 나오는 짧은 결과를 거른다) */
@@ -37,11 +40,68 @@
     return token.length < PADDING_FREE_LENGTH;
   }
 
+  /** 패딩 없는 짧은 덩어리인지 */
+  function isBareShort(token) {
+    return isShort(token) && !token.endsWith('=');
+  }
+
+  /**
+   * 흔히 쓰는 한글(KS X 1001 완성형 2350자)과 한자(JIS X 0208 6355자) 집합.
+   * 옛 인코딩 표를 디코딩해 만들고, 처음 필요할 때 한 번만 만든다. 만들 수 없는 환경이면 빈 집합.
+   */
+  let commonChars = null;
+  function common() {
+    if (commonChars) return commonChars;
+    const table = (encoding, leads, trails) => {
+      const bytes = [];
+      for (const hi of leads) for (const lo of trails) bytes.push(hi, lo);
+      try {
+        return new Set(new TextDecoder(encoding).decode(new Uint8Array(bytes)));
+      } catch {
+        return new Set();
+      }
+    };
+    const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
+    commonChars = {
+      hangul: table('euc-kr', range(0xb0, 0xc8), range(0xa1, 0xfe)),
+      kanji: table('shift_jis', [...range(0x88, 0x9f), ...range(0xe0, 0xea)], range(0x40, 0xfc).filter((b) => b !== 0x7f)),
+    };
+    return commonChars;
+  }
+
+  const HANGUL_TEXT = /^[가-힣]+(?: [가-힣]+)*[.!?~]?$/;
+  /** 가나(U+3040–30FF)와 한자(U+4E00–9FFF), 끝에 문장부호 하나 */
+  const JAPANESE_TEXT = /^[\u{3040}-\u{30ff}\u{4e00}-\u{9fff}]+[\u{3002}\u{ff01}\u{ff1f}!?]?$/u;
+  const HAN = /[\u{4e00}-\u{9fff}]/u;
+  /** 영어 단어 모양: Word, word, WORD (뒤에 숫자·문장부호 하나 허용) */
+  const LATIN_WORD = /^(?:[A-Z][a-z]+|[a-z]+|[A-Z]+)[0-9]*[.,!?]?$/;
+
+  function isLatinWord(word) {
+    if (word.length < 2 || !LATIN_WORD.test(word)) return false;
+    const letters = word.replace(/[^A-Za-z]/g, '');
+    if (letters === letters.toUpperCase()) return true; // 약어·대문자 이름 (ROIROIMMD, MOMO22)
+    return /[aeiou]/i.test(letters) && !/[^aeiouy]{4}/i.test(letters); // 모음이 있고 자음이 4개 이상 이어지지 않음
+  }
+
+  /**
+   * 패딩 없는 짧은 덩어리의 결과가 자연스러운 글인지. 우연히 Base64 모양이 된 ID·코드는
+   * 풀어도 깨진 글자 조합이 나오므로, 한 가지 문자 체계의 흔한 글자로만 된 결과만 받는다.
+   * - 한글: 흔히 쓰는 음절로만 된 낱말 (안녕, 번역본)
+   * - 일본어·한자: 가나와 흔히 쓰는 한자 (ヒカリ, 古い, 東京)
+   * - 영어: 단어 모양의 낱말 (Hello!, Osanai, ROIROIMMD)
+   */
+  function looksNatural(text) {
+    const t = text.trim();
+    if (HANGUL_TEXT.test(t)) return [...t].every((c) => !/[가-힣]/.test(c) || common().hangul.has(c));
+    if (JAPANESE_TEXT.test(t)) return [...t].every((c) => !HAN.test(c) || common().kanji.has(c));
+    return t.split(' ').every(isLatinWord);
+  }
+
   /** 디코딩 전 1차 필터: 길이, 패딩, 문자 종류. */
   function isCandidate(token, opts = AREA.body) {
     const { minLength, shortNeedsPadding = false } = opts;
     if (token.length < minLength || token.length > MAX_TOKEN_LENGTH) return false;
-    if (shortNeedsPadding && isShort(token) && !token.endsWith('=')) return false;
+    if (shortNeedsPadding && isBareShort(token) && !BARE_SHORT_LENGTHS.includes(token.length)) return false;
 
     const body = token.replace(/=+$/, '');
     if (body.length % 4 === 1) return false; // 유효한 Base64가 될 수 없는 길이
@@ -58,6 +118,7 @@
    * - 정규형: 풀린 바이트를 다시 Base64로 만들었을 때 똑같아야 한다. 실제 인코더는 `!`를 항상
    *   `IQ==`로 만들므로, 우연히 Base64 모양이 된 `Ia==` 같은 글자는 여기서 걸러진다.
    * - 의미 있는 결과: 글자나 숫자가 하나는 있어야 한다.
+   * - 패딩이 없으면 결과가 자연스러운 글이어야 한다(looksNatural).
    */
   function tryDecode(token) {
     let s = token.replace(/-/g, '+').replace(/_/g, '/').replace(/=+$/, '');
@@ -76,6 +137,7 @@
     }
     if (text.trim() === '' || CONTROL_CHARS.test(text)) return null;
     if (short && !MEANINGFUL.test(text)) return null;
+    if (isBareShort(token) && !looksNatural(text)) return null;
     return text;
   }
 
@@ -139,7 +201,7 @@
     }
   }
 
-  const base64 = { CANDIDATE, AREA, MAX_DEPTH, isShort, isCandidate, tryDecode, decodeDeep, tidy, findMatches, isHttpUrl };
+  const base64 = { CANDIDATE, AREA, MAX_DEPTH, isShort, looksNatural, isCandidate, tryDecode, decodeDeep, tidy, findMatches, isHttpUrl };
 
   if (typeof module === 'object' && module.exports) module.exports = base64;
   else root.B64D = Object.assign(root.B64D || {}, { base64 });
