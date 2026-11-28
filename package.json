@@ -1,6 +1,6 @@
 {
   "name": "kone-base64-decoder",
-  "version": "1.1.0",
+  "version": "1.0.1",
   "private": true,
   "description": "코네(kone.gg) 전용 Base64 자동 디코딩 확장 프로그램",
   "license": "MIT",
