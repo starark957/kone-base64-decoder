@@ -102,11 +102,18 @@
     }
   }
 
+  /** 코네 안 주소인지 (kone.gg와 그 하위 도메인) */
+  function isKoneUrl(url) {
+    const host = hostOf(url);
+    return host === 'kone.gg' || host.endsWith('.kone.gg');
+  }
+
   /**
    * 주소로 풀린 결과: 한 줄을 따로 차지하는 카드.
    * [링크 표시] 주소·도메인 [복사][원문/결과 전환]
+   * 기본은 새 탭에서 열고, 설정(koneSameTab)이 켜져 있으면 코네 안 주소는 지금 탭에서 연다.
    */
-  function makeLinkCard(span, m) {
+  function makeLinkCard(span, m, { koneSameTab = false } = {}) {
     const url = m.text.trim();
     span.classList.add(`${CLS}-card`);
     span.dataset.b64dHost = hostOf(url);
@@ -117,8 +124,10 @@
     const body = el('span', `${CLS}-body`);
     const a = el('a', `${CLS}-url`, url);
     a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
+    if (!(koneSameTab && isKoneUrl(url))) {
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+    }
     a.title = url;
     const raw = el('span', `${CLS}-raw`, m.original);
     raw.hidden = true;
@@ -155,7 +164,7 @@
    * - 주소 결과(본문, linkify): 카드
    * - 텍스트 결과: 클릭으로 원문/결과 전환. 링크 안에 있으면 클릭 전환 없이 툴팁만.
    */
-  function makeDecoded(m, { linkify, inLink }) {
+  function makeDecoded(m, { linkify, inLink, koneSameTab }) {
     const span = document.createElement('span');
     span.className = CLS;
     span.dataset.b64dOriginal = m.original;
@@ -163,7 +172,7 @@
     span.dataset.b64dDepth = String(m.depth);
     span.dataset.b64dShowing = 'decoded';
 
-    if (linkify && !inLink && base64.isHttpUrl(m.text)) return makeLinkCard(span, m);
+    if (linkify && !inLink && base64.isHttpUrl(m.text)) return makeLinkCard(span, m, { koneSameTab });
 
     span.classList.add(`${CLS}-text`);
     if (/[\r\n]/.test(m.text)) span.classList.add(`${CLS}-multiline`);
@@ -204,7 +213,7 @@
         parts.push(tail);
       }
       const mid = node.splitText(m.start);
-      const decorated = makeDecoded(m, { linkify: display.linkify, inLink });
+      const decorated = makeDecoded(m, { linkify: display.linkify, koneSameTab: display.koneSameTab, inLink });
       mid.replaceWith(decorated);
       parts.push(decorated);
     }

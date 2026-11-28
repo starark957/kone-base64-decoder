@@ -150,6 +150,17 @@ test.describe('그대로 둬야 하는 문자열', () => {
   test('빈 문자열', () => none(''));
 });
 
+test.describe('짧은 Base64 끄기 (allowShort: false)', () => {
+  const noShort = { ...AREA.body, allowShort: false };
+  test('16자 미만은 패딩이 있어도 없어도 그대로', () => {
+    assert.deepEqual(findMatches('판매처 Qw== 메모 7ZWcIQ== 7ZWc6riA', noShort), []);
+    assert.deepEqual(findMatches('[번역] Qw==', { ...AREA.title, allowShort: false }), []);
+  });
+  test('16자 이상은 그대로 푼다', () => {
+    assert.equal(only('7JWI64WV7ZWY7IS47JqU', noShort).text, '안녕하세요');
+  });
+});
+
 test.describe('부분 함수', () => {
   test('isCandidate: 길이 % 4 === 1 은 제외', () => {
     assert.equal(isCandidate('ABCDEabcde12345678901'), false); // 21자
