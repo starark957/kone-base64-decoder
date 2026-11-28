@@ -19,7 +19,7 @@
 
 ## 설치
 
-- **Chrome 웹 스토어:** 심사 중입니다. 등록되면 여기에 링크를 걸겠습니다.
+- **Chrome 웹 스토어:** [코네 Base64 디코더 설치하기](https://chromewebstore.google.com/detail/mokhlgnoagmdbodhondofohijipocooe)
 - **소스에서 직접 설치(개발용):** 저장소를 내려받고 `chrome://extensions` → 개발자 모드 켜기 → "압축해제된 확장 프로그램을 로드합니다"에서 저장소 폴더를 고릅니다. 삼성 인터넷(PC)은 "압축 해제된 추가 기능 불러오기"로 같은 폴더를 고릅니다.
 
 Chrome, Edge, 삼성 인터넷(PC) 등 Chromium 계열 브라우저에서 동작합니다(Manifest V3).
