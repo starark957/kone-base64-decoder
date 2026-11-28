@@ -25,6 +25,62 @@
     </span>
   </label>
 
+  <!-- 자동 디코딩이 꺼져 있으면 아래 옵션은 흐리게 막아 둔다(popup.js) -->
+  <fieldset class="options" id="options">
+    <section class="group">
+      <h2 class="group-title">풀어 줄 곳</h2>
+      <div class="card list">
+        <label class="row">
+          <span class="text"><span class="title">게시물 제목</span></span>
+          <span class="switch"><input type="checkbox" data-key="areaTitle"><span class="slider" aria-hidden="true"></span></span>
+        </label>
+        <label class="row">
+          <span class="text"><span class="title">게시물 본문</span></span>
+          <span class="switch"><input type="checkbox" data-key="areaBody"><span class="slider" aria-hidden="true"></span></span>
+        </label>
+        <label class="row">
+          <span class="text">
+            <span class="title">글 목록 제목</span>
+            <span class="desc">게시판, 검색, 홈 화면, 프로필</span>
+          </span>
+          <span class="switch"><input type="checkbox" data-key="areaList"><span class="slider" aria-hidden="true"></span></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2 class="group-title">디코딩</h2>
+      <div class="card list">
+        <label class="row">
+          <span class="text">
+            <span class="title">짧은 Base64도 풀기</span>
+            <span class="desc">Qw==처럼 16자보다 짧은 것</span>
+          </span>
+          <span class="switch"><input type="checkbox" data-key="shortTokens"><span class="slider" aria-hidden="true"></span></span>
+        </label>
+        <label class="row">
+          <span class="text">
+            <span class="title">코네 주소는 지금 탭에서 열기</span>
+            <span class="desc">풀린 주소가 kone.gg면 새 탭을 열지 않습니다</span>
+          </span>
+          <span class="switch"><input type="checkbox" data-key="koneSameTab"><span class="slider" aria-hidden="true"></span></span>
+        </label>
+      </div>
+    </section>
+
+    <section class="group">
+      <h2 class="group-title" id="color-title">강조 색상</h2>
+      <div class="card swatches" role="radiogroup" aria-labelledby="color-title">
+        <label class="swatch" title="파랑"><input type="radio" name="color" value="blue" aria-label="파랑"><span style="--c: #2563eb"></span></label>
+        <label class="swatch" title="초록"><input type="radio" name="color" value="green" aria-label="초록"><span style="--c: #16a34a"></span></label>
+        <label class="swatch" title="보라"><input type="radio" name="color" value="purple" aria-label="보라"><span style="--c: #7c3aed"></span></label>
+        <label class="swatch" title="주황"><input type="radio" name="color" value="orange" aria-label="주황"><span style="--c: #ea580c"></span></label>
+        <label class="swatch" title="분홍"><input type="radio" name="color" value="pink" aria-label="분홍"><span style="--c: #db2777"></span></label>
+        <label class="swatch" title="회색"><input type="radio" name="color" value="gray" aria-label="회색"><span style="--c: #64748b"></span></label>
+      </div>
+    </section>
+  </fieldset>
+
   <script src="../lib/browser-api.js"></script>
   <script src="../lib/settings.js"></script>
   <script src="popup.js"></script>

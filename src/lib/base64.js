@@ -14,6 +14,7 @@
    * - 패딩(=)이 있으면: 정규형이고 결과에 글자나 숫자가 있을 때
    * - 패딩이 없으면: 원래 패딩이 필요 없는 8·12자만, 결과가 자연스러운 글(looksNatural)일 때
    * 제목은 결과를 한 줄로 만든다(tidy).
+   * 설정에서 짧은 덩어리를 끄면 `{ ...AREA.body, allowShort: false }`처럼 넘겨 16자 이상만 본다.
    */
   const AREA = Object.freeze({
     body: Object.freeze({ minLength: 4, shortNeedsPadding: true }),
@@ -99,8 +100,9 @@
 
   /** 디코딩 전 1차 필터: 길이, 패딩, 문자 종류. */
   function isCandidate(token, opts = AREA.body) {
-    const { minLength, shortNeedsPadding = false } = opts;
+    const { minLength, shortNeedsPadding = false, allowShort = true } = opts;
     if (token.length < minLength || token.length > MAX_TOKEN_LENGTH) return false;
+    if (!allowShort && isShort(token)) return false;
     if (shortNeedsPadding && isBareShort(token) && !BARE_SHORT_LENGTHS.includes(token.length)) return false;
 
     const body = token.replace(/=+$/, '');

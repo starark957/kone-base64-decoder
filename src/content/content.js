@@ -1,5 +1,5 @@
 // 코네 페이지에 주입되는 콘텐츠 스크립트.
-// 설정을 읽어 게시물 본문·제목을 디코딩하고, 화면이 다시 그려지면 재처리한다.
+// 설정을 읽어 게시물 본문·제목과 글 목록 제목을 디코딩하고, 화면이 다시 그려지면 재처리한다.
 (function (root) {
   'use strict';
 
@@ -15,15 +15,29 @@
   let timer = 0;
 
   /**
-   * 처리할 영역 목록. 본문은 풀린 주소를 링크로 만들고,
+   * 처리할 수 있는 영역 목록. 본문은 풀린 주소를 링크로 만들고,
    * 제목은 텍스트로만 바꾼다(목록 제목은 링크 안이라 클릭 전환 없이 원문 툴팁만 붙는다).
+   * key는 영역별 켜기·끄기 설정 이름이다.
    */
-  const AREAS = Object.freeze([
-    { selector: selectors.postBody, opts: base64.AREA.body, display: { linkify: true } },
-    { selector: selectors.postTitle, opts: base64.AREA.title, display: { linkify: false } },
-    { selector: selectors.listTitle, opts: base64.AREA.title, display: { linkify: false } },
+  const ALL_AREAS = Object.freeze([
+    { key: 'areaBody', selector: selectors.postBody, opts: base64.AREA.body, linkify: true },
+    { key: 'areaTitle', selector: selectors.postTitle, opts: base64.AREA.title, linkify: false },
+    { key: 'areaList', selector: selectors.listTitle, opts: base64.AREA.title, linkify: false },
   ]);
-  const AREA_UNION = AREAS.map((a) => a.selector).join(', ');
+
+  /** 지금 설정으로 처리할 영역들과 그 선택자 합집합 */
+  let areas = [];
+  let areaUnion = '';
+
+  /** 설정에 맞춰 영역별 기준·표시 방식을 만든다. */
+  function buildAreas(s) {
+    areas = ALL_AREAS.filter((a) => s[a.key]).map((a) => ({
+      selector: a.selector,
+      opts: s.shortTokens ? a.opts : { ...a.opts, allowShort: false },
+      display: { linkify: a.linkify, koneSameTab: s.koneSameTab },
+    }));
+    areaUnion = areas.map((a) => a.selector).join(', ');
+  }
 
   /** 확장이 DOM을 바꾸는 동안에는 감시를 멈춰 자기 변경에 다시 반응하지 않게 한다. */
   function withoutObserver(fn) {
@@ -38,11 +52,11 @@
   function scan() {
     if (timer) clearTimeout(timer);
     timer = 0;
-    if (!current.enabled) return;
+    if (!current.enabled || areas.length === 0) return;
     const t0 = performance.now();
     withoutObserver(() => {
       replacer.reconcile();
-      for (const area of AREAS) {
+      for (const area of areas) {
         for (const el of document.querySelectorAll(area.selector)) {
           replacer.decorateArea(el, area.opts, area.display, selectors.skip);
         }
@@ -59,7 +73,8 @@
 
   /** 바뀐 곳이 처리 대상 영역과 관련 있는지. 시계·조회수 같은 다른 곳의 변경은 무시한다. */
   function isRelevant(records) {
-    const union = AREA_UNION;
+    const union = areaUnion;
+    if (!union) return false;
     for (const r of records) {
       const el = r.target.nodeType === Node.ELEMENT_NODE ? r.target : r.target.parentElement;
       if (!el) continue;
@@ -88,8 +103,10 @@
 
   function applySettings(next) {
     current = next;
+    buildAreas(next);
     document.documentElement.dataset.b64d = next.enabled ? 'on' : 'off';
-    // 꺼지면 원문으로 되돌리고, 켜지면 처음부터 다시 처리한다.
+    document.documentElement.dataset.b64dColor = next.color;
+    // 설정이 바뀌면 모두 원문으로 되돌리고 새 설정으로 처음부터 다시 처리한다.
     withoutObserver(() => replacer.restoreAll());
     scan();
   }

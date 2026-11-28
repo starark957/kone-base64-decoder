@@ -61,7 +61,7 @@
 
     /* 팝업(확장 아이콘을 눌렀을 때) */
     .popup {
-      position: absolute; top: 48px; right: 18px; width: 362px; height: 176px; border: 0;
+      position: absolute; top: 48px; right: 18px; width: 362px; height: 640px; border: 0; transform: scale(0.82); transform-origin: top right;
       border-radius: 10px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.1);
     }
 
@@ -122,7 +122,7 @@
           row('번역', `[번역] ${enc('겨울 정원')} 외전`, '번역가C', '11.24'),
         ].join('') + '</div></div>',
 
-      dark: () => caption('원문은 언제든 다시 확인', '카드의 버튼이나 파란 표시를 누르면 원문을 볼 수 있고, 팝업에서 한 번에 켜고 끌 수 있습니다. 다크 모드도 지원합니다.')
+      dark: () => caption('원문은 언제든 다시 확인', '카드 버튼이나 파란 표시를 누르면 원문을 볼 수 있습니다. 팝업에서 풀어 줄 곳, 강조 색상 등을 고를 수 있고 다크 모드도 지원합니다.')
         + windowOpen('kone.gg/s/example/…')
         + post({
           title: `[번역] ${enc('비 오는 날의 편지')} 완결`,
