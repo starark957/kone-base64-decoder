@@ -30,7 +30,8 @@
 /* ── 글자로 풀린 결과(제목·목록 제목·본문 문장): 파란 칩 + 왼쪽 강조선 ── */
 .b64d.b64d-text {
   padding: 0.05em 0.4em 0.05em 0.45em;
-  border-radius: 0.2em 0.38em 0.38em 0.2em;
+  /* 왼쪽 모서리는 강조선(3px)과 같은 고정 값: em으로 두면 큰 제목에서 모서리가 선을 깎아 가늘어 보인다 */
+  border-radius: 3px 0.38em 0.38em 3px;
   background-color: var(--b64d-text-fill);
   box-shadow: inset 3px 0 0 var(--b64d-hl);
   color: var(--b64d-text-color);
